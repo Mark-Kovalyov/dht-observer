@@ -21,17 +21,19 @@
 
     <Loggers>
         <Root level="info">
-            <AppenderRef ref="Console" />
-            <AppenderRef ref="RollingFile" />
+            <AppenderRef ref="Console" level="INFO"/>
+            <AppenderRef ref="RollingFile" level="INFO"/>
         </Root>
 
-        <Logger name="mayton.network.dhtobserver" level="trace"></Logger>
+        <Logger name="workers" level="TRACE"></Logger>
 
-        <Logger name="workers" level="info"></Logger>
+        <!--Logger name="mayton.network.dhtobserver" level="trace"></Logger>
+
+
 
         <Logger name="jmsLogger" level="info">
             <AppenderRef ref="jmsQueue" />
-        </Logger>
+        </Logger-->
     </Loggers>
 
 </Configuration>

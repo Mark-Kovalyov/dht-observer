@@ -1,0 +1,40 @@
+Configuration:
+  status: warn
+  name: DhtObserver
+  thresholdFilter:
+    level: debug
+
+  appenders:
+    Console:
+      name: STDOUT
+      target: SYSTEM_OUT
+      PatternLayout:
+        Pattern: "%highlight{%d{yyyy-MM-dd HH:mm:ss} [%-5p] %-3tid : %c %m%n}{FATAL=Bright red blink, ERROR=Bright red, WARN=Bright yellow, INFO=Bright green, DEBUG=Bright cyan, TRACE=Bright cyan}"
+    File:
+      name: File
+      fileName: logs/application.log
+      PatternLayout:
+        Pattern: "%d{yyyy-MM-dd HH:mm:ss} [%-5p] %-3tid : %c %m%n"
+      Filters:
+        ThresholdFilter:
+          level: error
+
+  Loggers:
+    logger:
+      -
+        name: org.apache.logging.log4j.test1
+        level: debug
+        additivity: false
+        AppenderRef:
+          ref: STDOUT
+      -
+        name: org.apache.logging.log4j.test2
+        level: debug
+        additivity: false
+        AppenderRef:
+          ref: File
+    Root:
+      level: info
+      AppenderRef:
+        - ref: STDOUT
+        - ref: File

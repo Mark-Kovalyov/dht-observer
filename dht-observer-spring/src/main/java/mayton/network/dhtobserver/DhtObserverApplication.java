@@ -3,6 +3,7 @@ package mayton.network.dhtobserver;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.core.LoggerContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -10,6 +11,7 @@ import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.boot.context.ApplicationPidFileWriter;
 
 import javax.annotation.PreDestroy;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -77,13 +79,19 @@ public class DhtObserverApplication {
     }
 
 	public static void main(String[] args) {
-        System.setProperty("log4j2.debug","true");
+        //System.setProperty("log4j2.debug","true");
         System.setProperty("log4j.configurationFile","log4j2.xml");
-	    logger.info(":: start");
-	    // TODO: How to bind Pid writer?
-        //SpringApplicationBuilder springApplicationBuilder = new SpringApplicationBuilder(DhtObserverApplication.class);
-        //springApplicationBuilder.build().addListeners(new ApplicationPidFileWriter("./dht-observer-app.pid"));
-		SpringApplication.run(DhtObserverApplication.class, args);
+        //LoggerContext context = (org.apache.logging.log4j.core.LoggerContext) LogManager.getContext(true);
+        //File file = new File("log4j2.xml");
+        // this will force a reconfiguration
+        //context.setConfigLocation(file.toURI());
+
+        System.out.printf("LogManager.context = %s\n", LogManager.getContext(true));
+
+        logger.info(":: start");
+        SpringApplication springApplication = new SpringApplication(DhtObserverApplication.class);
+        springApplication.addListeners(new ApplicationPidFileWriter("./dht-observer-app.pid"));
+        springApplication.run(args);
 	}
 
     @PreDestroy
@@ -93,8 +101,8 @@ public class DhtObserverApplication {
         logger.info(":: waiting for cachedthreadpool shutdown");
         executorService().shutdown();
         try {
-            logger.info(":: waiting 15s a while for existing tasks to terminate");
-            if (!executorService().awaitTermination(15, SECONDS)) {
+            logger.info(":: waiting 7 s a while for existing tasks to terminate");
+            if (!executorService().awaitTermination(7, SECONDS)) {
                 logger.info(":: trying to shut down now!");
                 executorService().shutdownNow(); // Cancel currently executing tasks
                 // Wait a while for tasks to respond to being cancelled
