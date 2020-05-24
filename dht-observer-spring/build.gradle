@@ -21,13 +21,17 @@ dependencies {
 
     // Spring
 	implementation 'org.springframework.boot:spring-boot-starter-activemq'
-	implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    // TODO: For monitoring
+	// implementation 'org.springframework.boot:spring-boot-starter-actuator'
     // TODO: Temporary disabled due to PostgreSQL db is not accessible
 	//implementation 'org.springframework.boot:spring-boot-starter-data-jdbc'
-	implementation 'org.springframework.cloud:spring-cloud-starter-netflix-hystrix'
+    // TODO: Implement gracefull connect to ActiveMQ
+	// implementation 'org.springframework.cloud:spring-cloud-starter-netflix-hystrix'
+    // Technically logging is depends on spring-web
+    implementation 'org.springframework.boot:spring-boot-starter-logging'
 
     // User libs
-    implementation 'mayton:mtn-network:1.1.1'
+    implementation 'mayton:mtn-network:[1.1.1,)'
 
     // Commons libraries
     implementation 'com.google.code.findbugs:jsr305:3.0.2'

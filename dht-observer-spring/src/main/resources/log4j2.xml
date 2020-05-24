@@ -2,15 +2,14 @@
 <Configuration>
     <Appenders>
         <Console name="Console" target="SYSTEM_OUT">
-            <PatternLayout
-                    pattern="%style{%d{ISO8601}}{black} %highlight{%-5level }[%style{%t}{bright,blue}] %style{%C{1.}}{bright,yellow}: %msg%n%throwable" />
+            <PatternLayout pattern="%highlight{%d{yyyy-MM-dd HH:mm:ss} [%-5p] %-3tid : %c %m%n}{FATAL=Bright red blink, ERROR=Bright red, WARN=Bright yellow, INFO=Bright green, DEBUG=Bright cyan, TRACE=Bright cyan}"/>
         </Console>
 
         <RollingFile name="RollingFile"
                      fileName="./logs/spring-boot-logger-log4j2.log"
                      filePattern="./logs/$${date:yyyy-MM}/spring-boot-logger-log4j2-%d{-dd-MMMM-yyyy}-%i.log.gz">
             <PatternLayout>
-                <pattern>%d %p %C{1.} [%t] %m%n</pattern>
+                <Pattern>%d{yyyy-MM-dd HH:mm:ss} [%-5p] %-3tid : %c %m%n</Pattern>
             </PatternLayout>
             <Policies>
                 <OnStartupTriggeringPolicy />
@@ -27,6 +26,12 @@
         </Root>
 
         <Logger name="mayton.network.dhtobserver" level="trace"></Logger>
+
+        <Logger name="workers" level="info"></Logger>
+
+        <Logger name="jmsLogger" level="info">
+            <AppenderRef ref="jmsQueue" />
+        </Logger>
     </Loggers>
 
 </Configuration>
