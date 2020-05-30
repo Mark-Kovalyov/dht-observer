@@ -1,13 +1,7 @@
-package mayton.network.dht;
+package mayton.network.dhtobserver;
 
-// TODO: Migrate to Spring JMX
-@Deprecated
 public interface DhtListenerMBean {
 
-    int getPacketsReceived();
 
-    int getPacketsParsed();
-
-    int getPacketsRejected();
 
 }

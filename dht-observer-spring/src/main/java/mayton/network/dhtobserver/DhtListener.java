@@ -1,42 +1,35 @@
 package mayton.network.dhtobserver;
 
-import bt.bencoding.BEEncoder;
-import mayton.network.dht.DhtListenerMBean;
+import bt.bencoding.BEParser;
+import com.github.soulaway.beecoder.BeeCoder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.ThreadContext;
+import org.apache.logging.log4j.core.util.NullOutputStream;
 import org.springframework.beans.factory.annotation.Autowired;
 import the8472.bencode.BDecoder;
 
-import javax.management.*;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.lang.management.ManagementFactory;
+import java.io.ObjectOutputStream;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.nio.ByteBuffer;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static java.lang.System.arraycopy;
 import static mayton.network.dhtobserver.Utils.binhex;
 
 public class DhtListener implements Runnable, DhtListenerMBean {
 
     private Logger logger;
 
-    public AtomicBoolean stopped = new AtomicBoolean(false);
-
     private AtomicInteger packetsReceived = new AtomicInteger(0);
     private AtomicInteger packetsRejected = new AtomicInteger(0);
 
     private int port;
     private String threadName;
-
-    private BEEncoder beEncoder = new BEEncoder();
-    private BDecoder decoder = new BDecoder();
-
-    public Stats stats = new Stats();
 
     private String shortCode; // Thiss is need for logging
 
@@ -45,105 +38,87 @@ public class DhtListener implements Runnable, DhtListenerMBean {
         return new GeoDb();
     }
 
-    @Deprecated
-    public static DhtListener createDhtListenerWithMBean(String threadName, int port) throws NotCompliantMBeanException, InstanceAlreadyExistsException, MBeanRegistrationException, MalformedObjectNameException {
-        MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
-        ObjectName name = new ObjectName("mayton.network.dht:type=DhtListener_" + threadName + "_" + port);
-        DhtListener dhtListener = new DhtListener(threadName, port, "");
-        mbs.registerMBean(dhtListener, name);
-        return dhtListener;
-    }
-
     public DhtListener(String threadName, int port, String shortCode) {
         this.port = port;
         this.threadName = threadName + "/" + port;
         this.shortCode = shortCode;
-        logger = LogManager.getLogger("workers." + shortCode);
-    }
-
-    public void stop() {
-        stopped.set(true);
+        ThreadContext.put("shortCode", shortCode);
+        logger = LogManager.getLogger("dhtlisteners." + shortCode);
+        ThreadContext.clearAll();
     }
 
     @Override
     public void run() {
-        logger.info("Started {} listener", threadName);
-
+        ThreadContext.put("shortCode", shortCode);
+        logger.info("Started {} listener, threadId = {}", threadName, Thread.currentThread().getId());
         DatagramSocket socket;
         try {
             socket = new DatagramSocket(port);
             socket.setReuseAddress(true);
             byte[] buf = new byte[320]; // WTF?
-
-            while (!stopped.get()) {
+            while (!Thread.currentThread().isInterrupted()) {
                 DatagramPacket packet = new DatagramPacket(buf, buf.length);
                 socket.receive(packet);
-                long time = System.nanoTime();
-                //MDC.put("label", shortCode + time);
                 InetAddress address = packet.getAddress();
                 int port = packet.getPort();
                 packet = new DatagramPacket(buf, buf.length, address, port);
                 decodeCommand(packet);
-                //MDC.clear();
             }
+            logger.info("Interrupted!");
             socket.close();
         } catch (IOException e) {
             logger.error(e);
+        } finally {
+            ThreadContext.clearAll();
         }
-        stopped.set(true);
     }
 
     void decodeCommand(DatagramPacket packet) {
-        //stats.packetsReceived++;
         packetsReceived.incrementAndGet();
         byte[] packetData = packet.getData();
         try{
+            BDecoder decoder = new BDecoder();
             Map<String, Object> res = decoder.decode(ByteBuffer.wrap(packetData));
-            logger.info("{} :: Received DHT UDP packet : from {}:{} ({}) with data:  {}\n",
+            logger.info("{} :: Received DHT UDP packet : from {}:{} ({})",
                     threadName,
                     packet.getAddress(),
                     geoDb().decodeCountryCity(packet.getAddress().getHostAddress()),
-                    packet.getPort(),
-                    binhex(packetData, true));
+                    packet.getPort()
+                    );
 
-            logger.trace("Decoded with structure : {}", Utils.dumpDEncodedMap(res, 0));
+            logger.trace("OK! with data: {}", binhex(packetData, true));
+            logger.trace("with structure : {}", Utils.dumpDEncodedMap(res));
         } catch (Exception ex) {
-            int offset = 16 * 3 + 12;
-            logger.warn("Unable to parse datagram: {}, trying to appy offset {}", binhex(packetData), offset);
-
-            byte[] packetDataCropped = new byte[packetData.length - offset];
-            arraycopy(packetData, offset, packetDataCropped, 0, packetDataCropped.length);
+            logger.warn("!", ex);
+            logger.warn("Unable to parse datagram: {}, with length = {}", binhex(packetData, true), packetData.length);
+            logger.info("Trying to use atomashpolsky::BEParser");
             try {
-                Map<String, Object> res = decoder.decode(ByteBuffer.wrap(packetDataCropped));
-                String countryCity = geoDb().decodeCountryCity(packet.getAddress().getHostAddress());
-                logger.info("{} :: Received DHT UDP packet : from {}:{} ({}) with offset = {} data:  {}\n",
-                        threadName,
-                        packet.getAddress(),
-                        countryCity,
-                        packet.getPort(),
-                        offset,
-                        binhex(packetDataCropped, true));
-                logger.trace("Decoded with structure : {}", Utils.dumpDEncodedMap(res, 0));
+                BEParser beParser = new BEParser(packetData);
+                logger.info("OK! beParser.map = {}", beParser.readMap());
+                logger.info("beParser.list = {}", beParser.readList());
             } catch (Exception ex2) {
-                logger.error("Unable to parse datagram: {}, with length = {}", binhex(packetDataCropped), packetDataCropped.length);
-                //stats.packetsRejected++;
-                packetsRejected.incrementAndGet();
+                logger.warn("!", ex2);
+                logger.warn("Unable to parse datagram: {}, with atomashpolsky::BEParser", binhex(packetData, true), packetData.length);
+                logger.info("Trying to use soulway::BeeCoder");
+                try {
+                    ObjectOutputStream objectOutputStream = new ObjectOutputStream(NullOutputStream.getInstance());
+                    BeeCoder.INSTANCE.decodeStream(new ByteArrayInputStream(packetData), objectOutputStream);
+                    objectOutputStream.flush();
+                    // TODO
+                    objectOutputStream.close();
+                    logger.info("OK!");
+                } catch (IOException ex3) {
+                    logger.warn("!", ex3);
+                    logger.error("Unable to parse with soulway::BeeCoder");
+                }
             }
+
         }
     }
 
-    @Override
-    public int getPacketsReceived() {
-        return packetsReceived.get();
+    public void askStop() {
+        logger.info("Received 'askStop' for threadId = {}", Thread.currentThread().getId());
+        Thread.currentThread().interrupt();
     }
 
-    @Override
-    public int getPacketsParsed() {
-        return packetsReceived.get() - packetsRejected.get();
-    }
-
-    @Override
-    public int getPacketsRejected() {
-        return packetsRejected.get();
-    }
 }

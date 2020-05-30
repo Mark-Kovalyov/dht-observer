@@ -1,0 +1,27 @@
+@startuml
+
+package "Libs" {
+  [com.github.atomashpolskiy:bt-bencoding:1.9]
+  [com.github.atomashpolskiy:bt-dht:1.9]
+  [com.github.soulaway:beecoder:1.0]
+  [com.turn:ttorrent:1.3.0]
+  [mldht.core:mldht:0.1.1]
+  [net.i2p.crypto.eddsa]
+  [the8472]
+}
+
+[com.github.atomashpolskiy:bt-parent:1.10] --> [com.github.atomashpolskiy:bt-bencoding:1.9]
+[com.github.atomashpolskiy:bt-parent:1.10] --> [com.github.atomashpolskiy:bt-dht:1.9]
+
+[com.github.atomashpolskiy:bt-dht:1.9] --> [mldht.core:mldht:0.1.1]
+[com.github.atomashpolskiy:bt-dht:1.9] --> [the8472]
+[com.github.atomashpolskiy:bt-dht:1.9] --> [net.i2p.crypto.eddsa]
+
+[DHT-Observer-spring] --> [com.github.soulaway:beecoder:1.0]
+[DHT-Observer-spring] --> [the8472]
+[DHT-Observer-spring] ..> [com.github.atomashpolskiy:bt-bencoding:1.9]
+[DHT-Observer-spring] ..> [com.github.atomashpolskiy:bt-dht:1.9]
+
+[TTorrent]
+
+@enduml

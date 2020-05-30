@@ -5,6 +5,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.StringJoiner;
 
 import static java.lang.String.format;
 
@@ -12,48 +13,25 @@ public class Utils {
 
     public static String wrapValue(Object value) {
         if (value instanceof byte[]) {
-            StringBuilder sb = new StringBuilder("'");
-            byte[] buf = (byte[]) value;
-            boolean first = true;
-            for (byte b : buf) {
-                int byteValue = b < 0 ? (int) b + 128 : (int)b;
-                if (!first) sb.append(' ');
-                sb.append(format("%02X",byteValue));
-                first = false;
-            }
-            sb.append("'");
-            return sb.toString();
+            StringJoiner stringJoiner = new StringJoiner(" ", "\"", "\"");
+            for (byte b : (byte[]) value) stringJoiner.add(format("%02X", b < 0 ? (int) b + 128 : (int) b));
+            return stringJoiner.toString();
         } else {
-            return "'" + value.toString() + "'";
+            return value.toString();
         }
-    }
-
-    public static String indent(int n) {
-        StringBuilder sb = new StringBuilder();
-        for(int i = 0;i<n;i++) sb.append(" ");
-        return sb.toString();
     }
 
     @NotNull
-    public static String dumpDEncodedMap(Map<String, Object> res, int offset) {
-        StringBuilder s = new StringBuilder();
-        s.append(" { ");
-        boolean first = true;
+    public static String dumpDEncodedMap(Map<String, Object> res) {
+        StringJoiner stringJoiner = new StringJoiner("," , "{", "}");
         for(Map.Entry<String, Object> item : res.entrySet()) {
-            if (!first) s.append(",");
             if (item.getValue() instanceof HashMap) {
-                s.append("\n" + indent(offset) + " { 'hashMap' : ")
-                 .append(dumpDEncodedMap((Map<String, Object>) item.getValue(), offset + 4))
-                 .append("\n" + indent(offset) + " } ");
+                stringJoiner.add("\"" + item.getKey() + "\":" + dumpDEncodedMap((Map<String, Object>) item.getValue()));
             } else {
-                s.append("'" + item.getKey() + "'")
-                 .append(" : ")
-                 .append(wrapValue(item.getValue()));
+                stringJoiner.add("\"" + item.getKey() + "\":" + wrapValue(item.getValue()));
             }
-            first = false;
         }
-        s.append(" } ");
-        return s.toString();
+        return stringJoiner.toString();
     }
 
     @NotNull

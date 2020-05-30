@@ -46,6 +46,7 @@ dependencies {
     implementation 'com.github.atomashpolskiy:bt-bencoding:1.9'
     implementation 'com.github.atomashpolskiy:bt-dht:1.9'
     implementation 'com.github.soulaway:beecoder:1.0'
+
     implementation 'org.apache.commons:commons-csv:1.8'
     implementation 'com.googlecode.concurrent-trees:concurrent-trees:2.6.1'
     implementation 'com.hankcs:aho-corasick-double-array-trie:1.2.2'

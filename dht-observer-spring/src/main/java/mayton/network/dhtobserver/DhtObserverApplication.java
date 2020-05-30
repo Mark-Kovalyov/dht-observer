@@ -11,13 +11,11 @@ import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.boot.context.ApplicationPidFileWriter;
 
 import javax.annotation.PreDestroy;
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.TimeUnit;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 
@@ -79,15 +77,8 @@ public class DhtObserverApplication {
     }
 
 	public static void main(String[] args) {
-        //System.setProperty("log4j2.debug","true");
         System.setProperty("log4j.configurationFile","log4j2.xml");
-        //LoggerContext context = (org.apache.logging.log4j.core.LoggerContext) LogManager.getContext(true);
-        //File file = new File("log4j2.xml");
-        // this will force a reconfiguration
-        //context.setConfigLocation(file.toURI());
-
         System.out.printf("LogManager.context = %s\n", LogManager.getContext(true));
-
         logger.info(":: start");
         SpringApplication springApplication = new SpringApplication(DhtObserverApplication.class);
         springApplication.addListeners(new ApplicationPidFileWriter("./dht-observer-app.pid"));
@@ -97,7 +88,7 @@ public class DhtObserverApplication {
     @PreDestroy
     public void preDestroy() {
         logger.info(":: signalling stop for all threads");
-        dhtListenerList.forEach(DhtListener::stop);
+        dhtListenerList.forEach(item -> item.askStop());
         logger.info(":: waiting for cachedthreadpool shutdown");
         executorService().shutdown();
         try {
