@@ -5,7 +5,7 @@
             <PatternLayout pattern="%highlight{%d{yyyy-MM-dd HH:mm:ss} [%-5p] %-3tid : %c %m%n}{FATAL=Bright red blink, ERROR=Bright red, WARN=Bright yellow, INFO=Bright green, DEBUG=Bright cyan, TRACE=Bright cyan}"/>
         </Console>
 
-        <File name="MainFileAppender" fileName="./logs/application.log" append="false">
+        <File name="MainFileAppender" fileName="./logs/dht-observer.log" append="false">
             <PatternLayout>
                 <Pattern>%d{yyyy-MM-dd HH:mm:ss} [%-5p] %-3tid : %c %m%n</Pattern>
             </PatternLayout>

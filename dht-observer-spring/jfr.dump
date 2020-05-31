@@ -1,0 +1,10 @@
+#!/bin/bash -v
+
+if [ -f "dht-observer-app.pid" ]; then
+  PID=$(cat dht-observer-app.pid)
+  jcmd $PID JFR.dump name=jfr/dump-$PID
+fi
+
+
+
+

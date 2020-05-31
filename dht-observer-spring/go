@@ -4,7 +4,19 @@
 
 #-Pargs=--spring.main.banner-mode=off,--customArgument=custom
 
-gradle bootJar && java -jar build/libs/dht-observer-0.0.1-SNAPSHOT.jar
+gradle bootJar
+
+# -XX:-UseGCLogFileRotation \
+# -XX:NumberOfGClogFiles=1 \
+# -XX:GCLogFileSize=8K \
+
+#  -XX:+FlightRecorder -XX:StartFlightRecording=duration=200s,filename=flight.jfr \
+
+java \
+ -XX:+FlightRecorder -XX:StartFlightRecording=filename=jfr/dht-observer.jfr \
+ -Xlog:gc:logs/gc.log -XX:+UseG1GC -XX:MaxGCPauseMillis=200 \
+ -Djava.io.tmpdir=./tmp \
+ -jar build/libs/dht-observer-0.0.1-SNAPSHOT.jar
 
 
 

@@ -2,6 +2,7 @@ package mayton.network.dhtobserver;
 
 import bt.bencoding.BEParser;
 import com.github.soulaway.beecoder.BeeCoder;
+import mayton.network.dhtobserver.jfr.DhtParseEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.ThreadContext;
@@ -23,10 +24,12 @@ import static mayton.network.dhtobserver.Utils.binhex;
 
 public class DhtListener implements Runnable, DhtListenerMBean {
 
+    private AtomicInteger packetsReceived = new AtomicInteger(0);
+
     private Logger logger;
 
-    private AtomicInteger packetsReceived = new AtomicInteger(0);
-    private AtomicInteger packetsRejected = new AtomicInteger(0);
+    private AtomicInteger tomashRejected = new AtomicInteger(0);
+
 
     private int port;
     private String threadName;
@@ -62,7 +65,12 @@ public class DhtListener implements Runnable, DhtListenerMBean {
                 InetAddress address = packet.getAddress();
                 int port = packet.getPort();
                 packet = new DatagramPacket(buf, buf.length, address, port);
+                DhtParseEvent dhtParseEvent = new DhtParseEvent();
+                dhtParseEvent.shortCode = shortCode;
+                dhtParseEvent.begin();
                 decodeCommand(packet);
+                dhtParseEvent.end();
+                dhtParseEvent.commit();
             }
             logger.info("Interrupted!");
             socket.close();
@@ -87,10 +95,10 @@ public class DhtListener implements Runnable, DhtListenerMBean {
                     );
 
             logger.trace("OK! with data: {}", binhex(packetData, true));
-            logger.trace("with structure : {}", Utils.dumpDEncodedMap(res));
+            logger.trace("with structure : {}", Utils.dumpDEncodedMapJackson(res));
         } catch (Exception ex) {
             logger.warn("!", ex);
-            logger.warn("Unable to parse datagram: {}, with length = {}", binhex(packetData, true), packetData.length);
+            logger.warn("Unable to parse datagram: {}, with atomashpolsky::BEDecoder length = {}", binhex(packetData, true), packetData.length);
             logger.info("Trying to use atomashpolsky::BEParser");
             try {
                 BEParser beParser = new BEParser(packetData);

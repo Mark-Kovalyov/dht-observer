@@ -17,6 +17,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 
+import static java.lang.System.getProperty;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 @SpringBootApplication
@@ -79,7 +80,7 @@ public class DhtObserverApplication {
 	public static void main(String[] args) {
         System.setProperty("log4j.configurationFile","log4j2.xml");
         System.out.printf("LogManager.context = %s\n", LogManager.getContext(true));
-        logger.info(":: start");
+        logger.info(":: start with user.dir = {}", getProperty("user.dir"));
         SpringApplication springApplication = new SpringApplication(DhtObserverApplication.class);
         springApplication.addListeners(new ApplicationPidFileWriter("./dht-observer-app.pid"));
         springApplication.run(args);

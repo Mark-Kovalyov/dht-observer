@@ -1,7 +1,15 @@
 package mayton.network.dhtobserver;
 
+import com.fasterxml.jackson.core.JsonEncoding;
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.json.WriterBasedJsonGenerator;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.*;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -10,6 +18,8 @@ import java.util.StringJoiner;
 import static java.lang.String.format;
 
 public class Utils {
+
+    static Logger logger = LogManager.getLogger(Utils.class);
 
     public static String wrapValue(Object value) {
         if (value instanceof byte[]) {
@@ -32,6 +42,29 @@ public class Utils {
             }
         }
         return stringJoiner.toString();
+    }
+
+    @NotNull
+    public static String dumpDEncodedMapJackson(Map<String, Object> res) {
+        try {
+            return dumpDEncodedMapJacksonEx(res);
+        } catch (IOException e) {
+            logger.error("", e);
+        }
+        return "";
+    }
+
+    public static String dumpDEncodedMapJacksonEx(Map<String, Object> res) throws IOException {
+        ByteArrayOutputStream stream = new ByteArrayOutputStream();
+        JsonFactory jfactory = new JsonFactory();
+        JsonGenerator jGenerator;
+        jGenerator = jfactory.createGenerator(stream, JsonEncoding.UTF8);
+        jGenerator.writeStartObject();
+        //jGenerator.writeStringField("name", "value");
+        jGenerator.writeEndObject();
+        jGenerator.flush();
+        stream.flush();
+        return new String(stream.toByteArray());
     }
 
     @NotNull
