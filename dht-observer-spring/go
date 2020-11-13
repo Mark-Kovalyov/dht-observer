@@ -12,11 +12,17 @@ gradle bootJar
 
 #  -XX:+FlightRecorder -XX:StartFlightRecording=duration=200s,filename=flight.jfr \
 
+rm -f jfr/*
+rm -f logs/*
+rm -f tmp/*
+
+# -XX:FlightRecorderOptions - deprecated!!!
+#  -XX:StartFlightRecording=filename=jfr/flight.jfr,defaultrecording=true,disk=true,repository=./tmp,maxage=1h,settings=default \
+
 java \
- -XX:+FlightRecorder -XX:StartFlightRecording=filename=jfr/dht-observer.jfr \
+ -XX:+FlightRecorder \
+ -XX:StartFlightRecording=filename=jfr/0001.jfr \
  -Xlog:gc:logs/gc.log -XX:+UseG1GC -XX:MaxGCPauseMillis=200 \
  -Djava.io.tmpdir=./tmp \
  -jar build/libs/dht-observer-0.0.1-SNAPSHOT.jar
-
-
 

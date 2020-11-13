@@ -2,5 +2,5 @@
 
 if [ -f "dht-observer-app.pid" ]; then
   PID=$(cat dht-observer-app.pid)
-  jcmd $PID JFR.stop name=1
+  jcmd $PID JFR.check
 fi

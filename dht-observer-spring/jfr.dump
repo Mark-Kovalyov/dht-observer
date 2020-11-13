@@ -1,8 +1,9 @@
 #!/bin/bash -v
 
 if [ -f "dht-observer-app.pid" ]; then
+  cdate=$(date +"%Y-%m-%d")
   PID=$(cat dht-observer-app.pid)
-  jcmd $PID JFR.dump name=jfr/dump-$PID
+  jcmd $PID JFR.dump name=flight-$cdate.jfr
 fi
 
 

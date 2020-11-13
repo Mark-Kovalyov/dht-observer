@@ -1,8 +1,6 @@
 package mayton.network.dhtobserver;
 
 import javax.annotation.concurrent.NotThreadSafe;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.locks.StampedLock;
 
 @NotThreadSafe
 public class Stats {

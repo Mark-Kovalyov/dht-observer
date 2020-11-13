@@ -6,7 +6,6 @@ import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jmx.export.annotation.ManagedAttribute;
 import org.springframework.jmx.export.annotation.ManagedOperation;
@@ -62,9 +61,8 @@ public class GeoDb {
 
     @PostConstruct
     public void postConstruct() {
-        try {
-            logger.info("init from {}" , csvPath);
-            CSVParser csvParser = new CSVParser(new FileReader(csvPath), CSVFormat.DEFAULT.withSkipHeaderRecord(true));
+        logger.info("init from {}" , csvPath);
+        try(CSVParser csvParser = new CSVParser(new FileReader(csvPath), CSVFormat.DEFAULT.withSkipHeaderRecord(true))) {
             Iterator<CSVRecord> i = csvParser.iterator();
             int cnt = 0;
             i.next();
@@ -77,7 +75,6 @@ public class GeoDb {
                 geoRecords.add(new GeoRecord(country, city, begin, end));
                 cnt++;
             }
-            csvParser.close();
             logger.info("init CSV records loaded. Sorting..");
             geoRecords.sort(GeoRecord.beginIpComparator);
             logger.info("init done, {} records loaded and sorted", cnt);
@@ -104,8 +101,7 @@ public class GeoDb {
 
     @Deprecated
     public synchronized Optional<GeoRecord> findFirstStuped(long ipv4, List<GeoRecord> geoRecordsArg) {
-        for (int i = 0; i < geoRecordsArg.size(); i++) {
-            GeoRecord gr = geoRecordsArg.get(i);
+        for (GeoRecord gr : geoRecordsArg) {
             if (ipv4 >= gr.beginIp && ipv4 <= gr.endIp) {
                 return Optional.of(gr);
             }
@@ -122,7 +118,7 @@ public class GeoDb {
         return result;
     }
 
-    public String decodeCountryCity(@NotNull String ip) {
+    public String decodeCountryCity(String ip) {
         logger.trace("ip={}", ip);
         long ipv4 = NetworkUtils.parseIpV4(ip);
         logger.trace("ip(integer)={}", ipv4);
