@@ -61,6 +61,7 @@ public class DhtListener implements Runnable, DhtListenerMBean {
                 socket.receive(packet);
                 InetAddress address = packet.getAddress();
                 int localPort = packet.getPort();
+                logger.trace("receive udp packet : {}", packet.getAddress().toString());
                 packet = new DatagramPacket(buf, buf.length, address, localPort);
                 DhtParseEvent dhtParseEvent = new DhtParseEvent();
                 dhtParseEvent.shortCode = shortCode;

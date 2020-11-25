@@ -3,11 +3,9 @@ package mayton.network.dhtobserver;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.logging.log4j.core.LoggerContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.boot.context.ApplicationPidFileWriter;
 
 import javax.annotation.PreDestroy;
@@ -46,8 +44,12 @@ public class DhtObserverApplication {
     }
 
     @Autowired
-    public DhtListener dhtListenerTorrent51413() {
+    public DhtListener dhtListenerTransmission51413() {
         return new DhtListener("Transm", 51413, "TR1");
+    }
+
+    public DhtListener dhtListenerTransmission48529() {
+        return new DhtListener("Transm", 48529, "TR3");
     }
 
     @Autowired
@@ -65,12 +67,13 @@ public class DhtObserverApplication {
 
     @SuppressWarnings("java:S1104")
     public List<DhtListener> dhtListenerList = new ArrayList<>() {{
-        add(dhtListenerTorrent51413());
+        add(dhtListenerTransmission51413());
         add(dhtListenerTorrent46434());
         add(dhtListenerAmule4672());
         add(dhtListenerAmule4665());
         add(dhtListenerVuze16680());
         add(dhtListenerVuze49001());
+        add(dhtListenerTransmission48529());
     }};
 
     public DhtObserverApplication() {
