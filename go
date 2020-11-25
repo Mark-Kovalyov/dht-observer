@@ -19,6 +19,8 @@ rm -f tmp/*
 # -XX:FlightRecorderOptions - deprecated!!!
 #  -XX:StartFlightRecording=filename=jfr/flight.jfr,defaultrecording=true,disk=true,repository=./tmp,maxage=1h,settings=default \
 
+mkdir jfr
+
 java \
  -XX:+FlightRecorder \
  -XX:StartFlightRecording=filename=jfr/0001.jfr \
