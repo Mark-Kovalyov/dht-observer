@@ -4,6 +4,7 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.ApplicationPidFileWriter;
@@ -19,7 +20,7 @@ import static java.lang.System.getProperty;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 @SpringBootApplication
-public class DhtObserverApplication {
+public class DhtObserverApplication implements CommandLineRunner {
 
     static Logger logger = LogManager.getLogger(DhtObserverApplication.class);
 
@@ -80,6 +81,11 @@ public class DhtObserverApplication {
         dhtListenerList.forEach(thread -> executorService().execute(thread));
     }
 
+    @Override
+    public void run(String... args) throws Exception {
+        logger.trace("Hangle command line arguments = {}", args);
+    }
+
 	public static void main(String[] args) {
         System.setProperty("log4j.configurationFile","log4j2.xml");
         System.out.printf("LogManager.context = %s\n", LogManager.getContext(true));
@@ -116,5 +122,6 @@ public class DhtObserverApplication {
         }
         logger.info(":: STOP FROM THE LIFECYCLE");
     }
+
 
 }

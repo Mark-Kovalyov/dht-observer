@@ -1,25 +1,26 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Configuration>
     <Appenders>
+
         <Console name="Console" target="SYSTEM_OUT">
-            <PatternLayout pattern="%highlight{%d{yyyy-MM-dd HH:mm:ss} [%-5p] %-3tid : %c %m%n}{FATAL=Bright red blink, ERROR=Bright red, WARN=Bright yellow, INFO=Bright green, DEBUG=Bright cyan, TRACE=Bright cyan}"/>
+            <PatternLayout pattern="%highlight{[%-5p] %-3tid : %c{1} %m%n}{FATAL=Bright red blink, ERROR=Bright red, WARN=Bright yellow, INFO=Bright green, DEBUG=Bright cyan, TRACE=Bright cyan}"/>
         </Console>
 
         <File name="MainFileAppender" fileName="./logs/dht-observer.log" append="false">
             <PatternLayout>
-                <Pattern>%d{yyyy-MM-dd HH:mm:ss} [%-5p] %-3tid : %c %m%n</Pattern>
+                <Pattern>%d{yyyy-MM-dd HH:mm:ss} [%-5p] %-3tid : %c{1} %m%n</Pattern>
             </PatternLayout>
         </File>
 
         <File name="GeoDbFileAppender" fileName="./logs/geo-db.log" append="false">
             <PatternLayout>
-                <Pattern>%d{yyyy-MM-dd HH:mm:ss} [%-5p] %-3tid : %c %m%n</Pattern>
+                <Pattern>%d{yyyy-MM-dd HH:mm:ss} [%-5p] %-3tid : %c{1} %m%n</Pattern>
             </PatternLayout>
         </File>
 
         <File name="DhtListenersFileAppender" fileName="./logs/dht-listeners.log" append="false">
             <PatternLayout>
-                <Pattern>%d{yyyy-MM-dd HH:mm:ss} [%-5p] %-3tid : %c %m%n</Pattern>
+                <Pattern>%d{yyyy-MM-dd HH:mm:ss} [%-5p] %-3tid : %c{1} %m%n</Pattern>
             </PatternLayout>
         </File>
 
@@ -28,7 +29,7 @@
                 <Route>
                     <File name="DhtListenersFileAppender" fileName="./logs/dht-listeners-${ctx:shortCode}.log" append="false">
                         <PatternLayout>
-                            <Pattern>%d{yyyy-MM-dd HH:mm:ss} [%-5p] %-3tid : %c %m%n</Pattern>
+                            <Pattern>%d{yyyy-MM-dd HH:mm:ss} [%-5p] %-3tid : %c{1} %m%n</Pattern>
                         </PatternLayout>
                     </File>
                 </Route>
