@@ -11,7 +11,7 @@ import java.util.LinkedHashMap;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 
-@Disabled
+
 public class UtilsTest {
 
     @Test

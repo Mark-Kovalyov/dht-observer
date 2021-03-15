@@ -83,7 +83,7 @@ public class DhtObserverApplication implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        logger.trace("Hangle command line arguments = {}", args);
+
     }
 
 	public static void main(String[] args) {

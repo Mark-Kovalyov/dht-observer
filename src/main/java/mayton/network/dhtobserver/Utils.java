@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonEncoding;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
+import org.apache.commons.codec.binary.Hex;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
@@ -56,21 +57,33 @@ public class Utils {
              jGenerator.writeStartObject();
         else
              jGenerator.writeObjectFieldStart(rootName);
+
         for (Map.Entry<String, Object> item : res.entrySet()) {
             Object value = item.getValue();
-            if (value instanceof String)
+            if (value instanceof String) {
                 jGenerator.writeStringField(item.getKey(), (String) value);
-            else if (value instanceof Integer)
+            } else if (value instanceof Integer) {
                 jGenerator.writeNumberField(item.getKey(), (Integer) item.getValue());
-            else if (value instanceof List) {
+            } else if (value instanceof List) {
                 jGenerator.writeArrayFieldStart(item.getKey());
                 for (Object o : (List) value) {
-                    if (o instanceof Integer) jGenerator.writeNumber((Integer) o);
-                    else if (o instanceof String) jGenerator.writeString((String) o);
+                    if (o instanceof Integer) {
+                        jGenerator.writeNumber((Integer) o);
+                    } else if (o instanceof String) {
+                        jGenerator.writeString((String) o);
+                    } else {
+                        logger.warn("Unable to detect value class = {}", o.getClass().toString());
+                    }
                 }
                 jGenerator.writeEndArray();
             } else if (value instanceof Map) {
                 dumpBencodedMapWithJacksonEx(item.getKey(), (Map) value, jGenerator);
+            } else if (value instanceof byte[]) {
+                // Sometimes it's possible that byte[] is a String, for example
+                // "q" : "ping"
+                jGenerator.writeStringField(item.getKey(), Hex.encodeHexString((byte[]) value));
+            } else {
+                logger.warn("Unable to detect value class = {}", value.getClass());
             }
         }
         jGenerator.writeEndObject();
