@@ -3,17 +3,14 @@ package mayton.network.dhtobserver;
 import com.fasterxml.jackson.core.JsonEncoding;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.json.WriterBasedJsonGenerator;
+import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.StringJoiner;
+import java.math.BigInteger;
+import java.util.*;
 
 import static java.lang.String.format;
 
@@ -45,23 +42,47 @@ public class Utils {
     }
 
     @NotNull
-    public static String dumpDEncodedMapJackson(Map<String, Object> res) {
+    public static String dumpBencodedMapWithJackson(Map<String, Object> res) {
         try {
-            return dumpDEncodedMapJacksonEx(res);
+            return dumpBencodedMapWithJacksonEx(res);
         } catch (IOException e) {
-            logger.error("", e);
+            logger.error("IOException", e);
         }
         return "";
     }
 
-    public static String dumpDEncodedMapJacksonEx(Map<String, Object> res) throws IOException {
+    public static void dumpBencodedMapWithJacksonEx(String rootName, Map<String, Object> res, JsonGenerator jGenerator) throws IOException {
+        if (rootName == null)
+             jGenerator.writeStartObject();
+        else
+             jGenerator.writeObjectFieldStart(rootName);
+        for (Map.Entry<String, Object> item : res.entrySet()) {
+            Object value = item.getValue();
+            if (value instanceof String)
+                jGenerator.writeStringField(item.getKey(), (String) value);
+            else if (value instanceof Integer)
+                jGenerator.writeNumberField(item.getKey(), (Integer) item.getValue());
+            else if (value instanceof List) {
+                jGenerator.writeArrayFieldStart(item.getKey());
+                for (Object o : (List) value) {
+                    if (o instanceof Integer) jGenerator.writeNumber((Integer) o);
+                    else if (o instanceof String) jGenerator.writeString((String) o);
+                }
+                jGenerator.writeEndArray();
+            } else if (value instanceof Map) {
+                dumpBencodedMapWithJacksonEx(item.getKey(), (Map) value, jGenerator);
+            }
+        }
+        jGenerator.writeEndObject();
+    }
+
+    public static String dumpBencodedMapWithJacksonEx(Map<String, Object> res) throws IOException {
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
         JsonFactory jfactory = new JsonFactory();
         JsonGenerator jGenerator;
         jGenerator = jfactory.createGenerator(stream, JsonEncoding.UTF8);
-        jGenerator.writeStartObject();
-        //jGenerator.writeStringField("name", "value");
-        jGenerator.writeEndObject();
+        jGenerator.setPrettyPrinter(new DefaultPrettyPrinter());
+        dumpBencodedMapWithJacksonEx(null, res, jGenerator);
         jGenerator.flush();
         stream.flush();
         return new String(stream.toByteArray());

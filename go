@@ -24,7 +24,6 @@ mkdir jfr
 java \
  -XX:+FlightRecorder \
  -XX:StartFlightRecording=filename=jfr/0001.jfr \
- -Xlog:gc:logs/gc.log -XX:+UseG1GC -XX:MaxGCPauseMillis=200 \
  -Djava.io.tmpdir=./tmp \
  -jar build/libs/dht-observer-0.0.1-SNAPSHOT.jar
 
