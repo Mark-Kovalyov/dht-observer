@@ -54,7 +54,8 @@ public class UDPConsumer implements Runnable {
                 dhtParseEvent.end();
                 dhtParseEvent.commit();
             } catch (InterruptedException e) {
-                e.printStackTrace();
+                Thread.currentThread().interrupt();
+                logger.warn("", e);
             }
         }
     }
@@ -62,6 +63,7 @@ public class UDPConsumer implements Runnable {
     void decodeCommand(DatagramPacket packet) {
         packetsReceived.incrementAndGet();
         byte[] packetData = packet.getData();
+        String uuid = UUID.randomUUID().toString();
         try{
             BDecoder decoder = new BDecoder();
             Map<String, Object> res = decoder.decode(ByteBuffer.wrap(packetData));
@@ -73,16 +75,27 @@ public class UDPConsumer implements Runnable {
                         packet.getPort()
                 );
             }
-            if (logger.isInfoEnabled()) {
-                logger.info("OK! with data: {}", binhex(packetData, true));
-                logger.info("with structure : {}", Utils.dumpBencodedMapWithJackson(res));
+
+            logger.info("OK! with data: {}", binhex(packetData, true));
+            String json = Utils.dumpBencodedMapWithJackson(res);
+            logger.info("with structure : {}", json);
+
+            try(OutputStream fos = new FileOutputStream("out/decoded/udp-packet-" + uuid);
+                PrintWriter pw = new PrintWriter(new FileWriter("out/decoded/udp-packet-" + uuid + ".json"))) {
+                fos.write(packet.getData());
+                pw.write(json);
             }
-            OutputStream fos = new FileOutputStream("out/udp-packet-" + UUID.randomUUID().toString());
-            fos.write(packet.getData());
-            fos.close();
+
         } catch (Exception ex) {
             logger.warn("!", ex);
-            //logger.warn("Unable to parse datagram: {}, with atomashpolsky::BEDecoder length = {}", binhex(packetData, true), packetData.length);
+            OutputStream fos = null;
+            try {
+                fos = new FileOutputStream("out/non-decoded/udp-packet-" + uuid);
+                fos.write(packet.getData());
+                fos.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 }

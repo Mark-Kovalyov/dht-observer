@@ -81,12 +81,28 @@ public class Utils {
             } else if (value instanceof byte[]) {
                 // Sometimes it's possible that byte[] is a String, for example
                 // "q" : "ping"
-                jGenerator.writeStringField(item.getKey(), Hex.encodeHexString((byte[]) value));
+                jGenerator.writeStringField(item.getKey(), beautifyBlob((byte[]) value));
             } else {
                 logger.warn("Unable to detect value class = {}", value.getClass());
             }
         }
         jGenerator.writeEndObject();
+    }
+
+    private static String beautifyBlob(byte[] arr) {
+        if (allContainsAscii(arr)) {
+            return Hex.encodeHexString(arr) + " ( '" + new String(arr) + "' )";
+        } else {
+            return Hex.encodeHexString(arr);
+        }
+    }
+
+    private static boolean allContainsAscii(byte[] arr) {
+        for(int i = 0 ;i<arr.length;i++) {
+            if (arr[i] > 32) continue;
+            else return false;
+        }
+        return true;
     }
 
     public static String dumpBencodedMapWithJacksonEx(Map<String, Object> res) throws IOException {
