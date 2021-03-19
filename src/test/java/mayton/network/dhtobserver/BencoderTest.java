@@ -18,10 +18,11 @@ public class BencoderTest {
     @Test
     public void test1() throws IOException {
         BDecoder decoder = new BDecoder();
-        InputStream fis = new FileInputStream("out/udp-packet-e6ec5bdf-2a21-41eb-af08-d82512abe993");
+        InputStream fis = new FileInputStream("out/non-decoded/udp-packet-51388d81-cdbf-4aab-9c21-8d5426d75507");
+        fis.skip(20);
         Map<String, Object> res = decoder.decode(ByteBuffer.wrap(IOUtils.toByteArray(fis)));
         String json = Utils.dumpBencodedMapWithJacksonEx(res);
-        assertEquals("{\"a\":{}}", json);
+        System.out.println(json);
     }
 
 }

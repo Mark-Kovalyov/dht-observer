@@ -69,7 +69,6 @@ public class DhtListener implements Runnable, DhtListenerMBean {
                 DatagramPacket packet = new DatagramPacket(buf, buf.length);
                 socket.receive(packet);
                 InetAddress address = packet.getAddress();
-                int localPort = packet.getPort();
                 logger.trace("receive udp packet : {}", packet.getAddress().toString());
                 udpPackets.put(Triple.of(Arrays.copyOf(buf, buf.length), address, port));
             }
@@ -87,4 +86,13 @@ public class DhtListener implements Runnable, DhtListenerMBean {
         Thread.currentThread().interrupt();
     }
 
+    @Override
+    public int getReceivedPackets() {
+        return 0;
+    }
+
+    @Override
+    public int getSentPackets() {
+        return 0;
+    }
 }

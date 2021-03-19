@@ -6,13 +6,15 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.ThreadContext;
 import the8472.bencode.BDecoder;
+import the8472.bencode.BEncoder;
 
 import java.io.*;
 import java.net.DatagramPacket;
+import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.nio.ByteBuffer;
-import java.util.Map;
-import java.util.UUID;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -67,14 +69,45 @@ public class UDPConsumer implements Runnable {
         try{
             BDecoder decoder = new BDecoder();
             Map<String, Object> res = decoder.decode(ByteBuffer.wrap(packetData));
-            if (logger.isInfoEnabled()) {
-                logger.info("{} :: Received DHT UDP packet : from {}:{} ({})",
-                        threadName,
-                        packet.getAddress(),
-                        "{}", //geoDb().decodeCountryCity(packet.getAddress().getHostAddress()),
-                        packet.getPort()
-                );
+
+            logger.info("{} :: Received DHT UDP packet : from {}:{} ({})",
+                    threadName,
+                    packet.getAddress(),
+                    "{}", //geoDb().decodeCountryCity(packet.getAddress().getHostAddress()),
+                    packet.getPort()
+            );
+
+            if (isPing(res)) {
+                // ping Query = {"t":"aa", "y":"q", "q":"ping", "a":{"id":"abcdefghij0123456789"}}
+                // bencoded = d1:ad2:id20:abcdefghij0123456789e1:q4:ping1:t2:aa1:y1:qe
+                //
+                // Response = {"t":"aa", "y":"r", "r": {"id":"mnopqrstuvwxyz123456"}}
+                // bencoded = d1:rd2:id20:mnopqrstuvwxyz123456e1:t2:aa1:y1:re
+                logger.info("Ping detected");
+                DatagramSocket socket = new DatagramSocket();
+                BEncoder encoder = new BEncoder();
+                // Alphabet order of keys!!
+                Map<String, Object> sendMap = new TreeMap<>();
+                    sendMap.put("r", Collections.singletonMap("id", Constants.PEER_ID));
+                    sendMap.put("t", "aa".getBytes(StandardCharsets.UTF_8));
+                    sendMap.put("y", "r".getBytes(StandardCharsets.UTF_8));
+
+                ByteBuffer sendBuffer = encoder.encode(sendMap, 320);
+                byte[] sendBytes = sendBuffer.array();
+                socket.send(new DatagramPacket(sendBytes, sendBytes.length, packet.getAddress(), packet.getPort()));
+                logger.debug("Pong : {}", Utils.dumpBencodedMapWithJackson(sendMap));
             }
+            if (isFindNode(res)) {
+                logger.info("Find_node request detected");
+
+            }
+
+            if (isGetPeers(res)) {
+                logger.info("Get_peers request detected");
+
+            }
+
+
 
             logger.info("OK! with data: {}", binhex(packetData, true));
             String json = Utils.dumpBencodedMapWithJackson(res);
@@ -97,5 +130,17 @@ public class UDPConsumer implements Runnable {
                 e.printStackTrace();
             }
         }
+    }
+
+    private boolean isGetPeers(Map<String, Object> res) {
+        return res.containsKey("q") && (new String((byte[]) res.get("q")).equals("get_peers"));
+    }
+
+    private boolean isFindNode(Map<String, Object> res) {
+        return res.containsKey("q") && (new String((byte[]) res.get("q")).equals("find_node"));
+    }
+
+    private boolean isPing(Map<String, Object> res) {
+        return res.containsKey("q") && (new String((byte[]) res.get("q")).equals("ping"));
     }
 }
