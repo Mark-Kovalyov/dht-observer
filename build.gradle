@@ -59,7 +59,11 @@ dependencies {
     // JDBC drivers
     runtimeOnly 'org.postgresql:postgresql:[42.2.12,)'
 
-	testImplementation('org.springframework.boot:spring-boot-starter-test') {
+    implementation 'com.datastax.oss:java-driver-core:4.10.0'
+    implementation 'com.datastax.oss:java-driver-query-builder:4.10.0'
+    implementation 'com.datastax.oss:java-driver-mapper-runtime:4.10.0'
+
+    testImplementation('org.springframework.boot:spring-boot-starter-test') {
 		exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
 	}
 }

@@ -1,15 +1,27 @@
 use dhtspace;
 
-create table nodes(
+drop table nodes_stats;
+drop table nodes_hosts;
+
+create table nodes_hosts(
  node_id text primary key,
  last_ip text,
  last_port int,
- pings_requests int,
- get_peeers_requests int,
- find_nodes_requests int
+ last_update_time timestamp
+);
+
+create table nodes_stats(
+ node_id text primary key,
+ pings_requests counter,
+ get_peeers_requests counter,
+ find_nodes_requests counter
 );
 
 -- Example for ttl-records
+
+update nodes set find_nodes_requests = find_nodes_requests + 1 where node_id = '7d2c835df2f49462a73c00988c7eadcf722c57e1';
+
+update nodes_stats set pings_requests = pings_requests + 1 where node_id = '7d2c835df2f49462a73c00988c7eadcf722c57e1';
 
 insert into nodes(node_id) values('7d2c835df2f49462a73c00988c7eadcf722c57e1') using ttl 86400;
 

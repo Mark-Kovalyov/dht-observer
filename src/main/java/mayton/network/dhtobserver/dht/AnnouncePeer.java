@@ -5,11 +5,11 @@ import org.jetbrains.annotations.NotNull;
 import javax.annotation.concurrent.Immutable;
 
 @Immutable
-public class FindNode implements DhtEvent {
+public final class AnnouncePeer implements DhtEvent{
 
     private final String id;
 
-    public FindNode(String id) {
+    public AnnouncePeer(String id) {
         this.id = id;
     }
 

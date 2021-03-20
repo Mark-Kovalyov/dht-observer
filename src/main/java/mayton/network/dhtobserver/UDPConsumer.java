@@ -1,10 +1,12 @@
 package mayton.network.dhtobserver;
 
+import mayton.network.dhtobserver.dht.Ping;
 import mayton.network.dhtobserver.jfr.DhtParseEvent;
 import org.apache.commons.lang3.tuple.Triple;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.ThreadContext;
+import org.springframework.beans.factory.annotation.Autowired;
 import the8472.bencode.BDecoder;
 import the8472.bencode.BEncoder;
 
@@ -21,6 +23,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static mayton.network.dhtobserver.Utils.binhex;
 
 public class UDPConsumer implements Runnable {
+
+    @Autowired
+    private Chronicler chronicler;
 
     private AtomicInteger packetsReceived = new AtomicInteger(0);
 
@@ -102,8 +107,9 @@ public class UDPConsumer implements Runnable {
 
             }
 
-            if (isGetPeers(res)) {
-                logger.info("Get_peers request detected");
+            Optional<Ping> pingCommand = tryToExtractPingCommand(res);
+            if (pingCommand.isPresent()) {
+                logger.info("Get_peers request detected from id = {}", pingCommand.get().getId());
 
             }
 
@@ -132,14 +138,36 @@ public class UDPConsumer implements Runnable {
         }
     }
 
+    // {
+    //  "a" : {
+    //    "id" : "9ef5c2bb83effdadd3b17b6d8483b79ede139aa4"
+    //  },
+    //  "q" : "70696e67 ( 'ping' )",
+    //  "t" : "ef14",
+    //  "v" : "4c540101",
+    //  "y" : "71 ( 'q' )"
+    // }
+    private Optional<Ping> tryToExtractPingCommand(Map<String, Object> res) {
+        if (res.containsKey("q") && (new String((byte[]) res.get("q")).equals("get_peers"))) {
+            Map<String, Object> a = (Map<String, Object>) res.get("a");
+            String id = (String) a.get("id");
+            return Optional.of(new Ping(id));
+        } else {
+            return Optional.empty();
+        }
+    }
+
+    @Deprecated
     private boolean isGetPeers(Map<String, Object> res) {
         return res.containsKey("q") && (new String((byte[]) res.get("q")).equals("get_peers"));
     }
 
+    @Deprecated
     private boolean isFindNode(Map<String, Object> res) {
         return res.containsKey("q") && (new String((byte[]) res.get("q")).equals("find_node"));
     }
 
+    @Deprecated
     private boolean isPing(Map<String, Object> res) {
         return res.containsKey("q") && (new String((byte[]) res.get("q")).equals("ping"));
     }
