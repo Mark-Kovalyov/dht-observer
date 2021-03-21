@@ -4,6 +4,7 @@ import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 
+import com.google.inject.Inject;
 import mayton.network.dhtobserver.Chronicler;
 import mayton.network.dhtobserver.dht.FindNode;
 import mayton.network.dhtobserver.dht.GetPeers;
@@ -25,23 +26,27 @@ public class CassandraChronicler implements Chronicler {
 
     private String keyspace = "dhtspace";
 
+    public CassandraChronicler() {
+        session = CqlSession.builder().withKeyspace(keyspace).build();
+    }
+
     //@PostConstruct
     public void postConstruct() {
         logger.info("postConstruct");
-        //session = CqlSession.builder().withKeyspace(keyspace).build();
+
         logger.info("postConstruct done");
     }
 
     @Override
     public void onPing(@Nonnull Ping command) {
-        /*logger.debug("onPing with command = {}", command.toString());
+        logger.debug("onPing with command = {}", command.toString());
         try {
             PreparedStatement pst = session.prepare("update nodes_stats set pings_requests = pings_requests + 1 where node_id = ?");
-            ResultSet res = session.execute(pst.bind("node_id", command.getId()));
+            ResultSet res = session.execute(pst.bind(command.getId()));
             logger.debug("was applied = {}", res.wasApplied());
         } catch (Exception ex) {
             logger.error("!", ex);
-        }*/
+        }
     }
 
     @Override
