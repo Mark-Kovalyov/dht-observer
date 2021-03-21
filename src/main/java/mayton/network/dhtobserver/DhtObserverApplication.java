@@ -3,11 +3,6 @@ package mayton.network.dhtobserver;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.CommandLineRunner;
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.context.ApplicationPidFileWriter;
 
 import javax.annotation.PreDestroy;
 import java.util.ArrayList;
@@ -19,8 +14,7 @@ import java.util.concurrent.ThreadFactory;
 import static java.lang.System.getProperty;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
-@SpringBootApplication
-public class DhtObserverApplication implements CommandLineRunner {
+public class DhtObserverApplication  {
 
     static Logger logger = LogManager.getLogger(DhtObserverApplication.class);
 
