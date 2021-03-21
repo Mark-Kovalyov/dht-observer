@@ -7,7 +7,7 @@ import org.apache.commons.lang3.tuple.Triple;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.ThreadContext;
-import org.springframework.beans.factory.annotation.Autowired;
+
 import the8472.bencode.BDecoder;
 import the8472.bencode.BEncoder;
 
@@ -25,7 +25,7 @@ import static mayton.network.dhtobserver.Utils.binhex;
 
 public class UDPConsumer implements Runnable {
 
-    @Autowired
+    //@Autowired
     private Chronicler chronicler;
 
     private AtomicInteger packetsReceived = new AtomicInteger(0);

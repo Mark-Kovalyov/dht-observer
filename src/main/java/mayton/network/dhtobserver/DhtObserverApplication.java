@@ -3,13 +3,7 @@ package mayton.network.dhtobserver;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.CommandLineRunner;
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.context.ApplicationPidFileWriter;
 
-import javax.annotation.PreDestroy;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -19,32 +13,32 @@ import java.util.concurrent.ThreadFactory;
 import static java.lang.System.getProperty;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
-@SpringBootApplication
-public class DhtObserverApplication implements CommandLineRunner {
+//@SpringBootApplication
+public class DhtObserverApplication {
 
     static Logger logger = LogManager.getLogger(DhtObserverApplication.class);
 
-    @Autowired
+    //@Autowired
     public DhtListener dhtListenerVuze16680() {
         return new DhtListener("Vuze", 16680, "VZ1");
     }
 
-    @Autowired
+    //@Autowired
     public DhtListener dhtListenerVuze49001() {
         return new DhtListener("Vuze", 49001, "VZ2");
     }
 
-    @Autowired
+    //@Autowired
     public DhtListener dhtListenerAmule4665() {
         return new DhtListener("A-Mule", 4665, "AM1");
     }
 
-    @Autowired
+    //@Autowired
     public DhtListener dhtListenerAmule4672() {
         return new DhtListener("A-Mule", 4672, "AM2");
     }
 
-    @Autowired
+    //@Autowired
     public DhtListener dhtListenerTransmission51413() {
         return new DhtListener("Transm", 51413, "TR1");
     }
@@ -53,12 +47,12 @@ public class DhtObserverApplication implements CommandLineRunner {
         return new DhtListener("Transm", 48529, "TR3");
     }
 
-    @Autowired
+    //@Autowired
     public DhtListener dhtListenerTorrent46434() {
         return new DhtListener("Transm", 46434, "TR2");
     }
 
-    @Autowired
+    //@Autowired
     public ExecutorService executorService() {
         ThreadFactory threadFactory = new ThreadFactoryBuilder()
                 .setNameFormat("DHTWorker-%d")
@@ -81,7 +75,7 @@ public class DhtObserverApplication implements CommandLineRunner {
         dhtListenerList.forEach(thread -> executorService().execute(thread));
     }
 
-    @Override
+    //@Override
     public void run(String... args) throws Exception {
 
     }
@@ -90,12 +84,12 @@ public class DhtObserverApplication implements CommandLineRunner {
         System.setProperty("log4j.configurationFile","log4j2.xml");
         System.out.printf("LogManager.context = %s\n", LogManager.getContext(true));
         logger.info(":: start with user.dir = {}", getProperty("user.dir"));
-        SpringApplication springApplication = new SpringApplication(DhtObserverApplication.class);
-        springApplication.addListeners(new ApplicationPidFileWriter("./dht-observer-app.pid"));
-        springApplication.run(args);
+        //SpringApplication springApplication = new SpringApplication(DhtObserverApplication.class);
+        //springApplication.addListeners(new ApplicationPidFileWriter("./dht-observer-app.pid"));
+        //springApplication.run(args);
 	}
 
-    @PreDestroy
+    //@PreDestroy
     public void preDestroy() {
         logger.info(":: signalling stop for all threads");
         dhtListenerList.forEach(item -> item.askStop());

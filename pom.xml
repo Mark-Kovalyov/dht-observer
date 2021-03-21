@@ -2,33 +2,18 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-	<parent>
-		<groupId>org.springframework.boot</groupId>
-		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>2.4.4</version>
-		<relativePath/> <!-- lookup parent from repository -->
-	</parent>
+
 	<groupId>mayton.network</groupId>
 	<artifactId>dht-observer</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>dht-observer</name>
-	<description>Demo project for DHT</description>
+	<description>Demo project for DHT (Guice)</description>
+
 	<properties>
 		<java.version>11</java.version>
 	</properties>
 
     <dependencies>
-
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-data-cassandra</artifactId>
-		</dependency>
-
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-test</artifactId>
-			<scope>test</scope>
-		</dependency>
 
         <dependency>
             <groupId>mayton.libs</groupId>
@@ -94,15 +79,9 @@
 
         <!--
         implementation 'com.fasterxml.jackson.core:jackson-core:2.11.0'
-
-
-
         implementation 'com.googlecode.concurrent-trees:concurrent-trees:2.6.1'
         implementation 'com.hankcs:aho-corasick-double-array-trie:1.2.2'
-
         compile group: 'org.apache.poi', name: 'poi', version: '4.1.2'
-
-
         // JDBC drivers
         runtimeOnly 'org.postgresql:postgresql:[42.2.12,)'
         -->
@@ -124,15 +103,58 @@
             <version>4.10.0</version>
         </dependency>
 
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-api</artifactId>
+            <version>5.7.0</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-engine</artifactId>
+            <version>5.7.0</version>
+            <scope>test</scope>
+        </dependency>
+
     </dependencies>
 
-	<build>
-		<plugins>
-			<plugin>
-				<groupId>org.springframework.boot</groupId>
-				<artifactId>spring-boot-maven-plugin</artifactId>
-			</plugin>
-		</plugins>
-	</build>
+    <build>
+        <plugins>
+            <plugin>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>2.22.2</version>
+                <configuration>
+                    <groups>cassandra | bencode</groups>
+                    <!--excludedGroups>integration, regression</excludedGroups-->
+                </configuration>
+            </plugin>
+            <plugin>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <version>2.22.2</version>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.2.0</version>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <addClasspath>true</addClasspath>
+                            <mainClass>mayton.network.dhtobserver.DhtObserverApplication</mainClass>
+                        </manifest>
+                    </archive>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.8.0</version>
+                <configuration>
+                    <release>11</release>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 
 </project>

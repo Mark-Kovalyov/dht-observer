@@ -11,16 +11,12 @@ import mayton.network.dhtobserver.dht.Ping;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.stereotype.Component;
 
 import javax.annotation.Nonnull;
-import javax.annotation.PostConstruct;
 import java.net.InetSocketAddress;
 
-@Component
-@ConfigurationProperties(prefix = "cassandra")
+//@Component
+//@ConfigurationProperties(prefix = "cassandra")
 public class CassandraChronicler implements Chronicler {
 
     private static Logger logger = LoggerFactory.getLogger(CassandraChronicler.class);
@@ -29,7 +25,7 @@ public class CassandraChronicler implements Chronicler {
 
     private String keyspace = "dhtspace";
 
-    @PostConstruct
+    //@PostConstruct
     public void postConstruct() {
         logger.info("postConstruct");
         //session = CqlSession.builder().withKeyspace(keyspace).build();

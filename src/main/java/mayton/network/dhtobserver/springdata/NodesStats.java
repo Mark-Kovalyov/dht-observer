@@ -1,12 +1,7 @@
 package mayton.network.dhtobserver.springdata;
 
-import org.springframework.data.cassandra.core.mapping.PrimaryKey;
-import org.springframework.data.cassandra.core.mapping.Table;
-
-@Table
 public class NodesStats {
 
-    @PrimaryKey
     private String nodeId;
 
     private long findNodesRequests;

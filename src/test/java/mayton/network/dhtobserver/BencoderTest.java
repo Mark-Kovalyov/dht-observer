@@ -3,6 +3,7 @@ package mayton.network.dhtobserver;
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import the8472.bencode.BDecoder;
 
@@ -12,6 +13,7 @@ import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.Map;
 
+@Tag("bencode")
 public class BencoderTest {
 
     @Test

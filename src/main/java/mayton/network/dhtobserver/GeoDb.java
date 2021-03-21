@@ -6,13 +6,7 @@ import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.jmx.export.annotation.ManagedAttribute;
-import org.springframework.jmx.export.annotation.ManagedOperation;
-import org.springframework.jmx.export.annotation.ManagedResource;
-import org.springframework.stereotype.Component;
 
-import javax.annotation.PostConstruct;
 import javax.annotation.concurrent.ThreadSafe;
 import java.io.FileReader;
 import java.io.IOException;
@@ -35,12 +29,12 @@ public class GeoDb {
     private AtomicInteger requests = new AtomicInteger();
     private AtomicLong cumulativeResponseTimeMs = new AtomicLong();
 
-    @ManagedAttribute
+    //@ManagedAttribute
     public int getRequests() {
         return requests.get();
     }
 
-    @ManagedAttribute
+    //@ManagedAttribute
     public String getAverageResponseTimeMs() {
         int localRequests = requests.get();
         if (localRequests == 0) {
@@ -50,16 +44,16 @@ public class GeoDb {
         }
     }
 
-    @ManagedOperation(description="Reset statistics")
+    //@ManagedOperation(description="Reset statistics")
     public void resetStatistics() {
         requests.set(0);
         cumulativeResponseTimeMs.set(0L);
     }
 
-    @Value("${geoDb.csvPath}")
+    //@Value("${geoDb.csvPath}")
     private String csvPath;
 
-    @PostConstruct
+    //@PostConstruct
     public void postConstruct() {
         logger.info("init from {}" , csvPath);
         try(CSVParser csvParser = new CSVParser(new FileReader(csvPath), CSVFormat.DEFAULT.withSkipHeaderRecord(true))) {

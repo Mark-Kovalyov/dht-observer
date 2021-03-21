@@ -8,7 +8,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.ThreadContext;
 import org.apache.logging.log4j.core.util.NullOutputStream;
-import org.springframework.beans.factory.annotation.Autowired;
+
 import the8472.bencode.BDecoder;
 
 import java.io.ByteArrayInputStream;
