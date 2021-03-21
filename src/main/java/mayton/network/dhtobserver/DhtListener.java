@@ -41,10 +41,10 @@ public class DhtListener implements Runnable, DhtListenerMBean {
 
     private Thread udpConsumerThread;
 
-    @Autowired
+/*    @Autowired
     private GeoDb geoDb() {
         return new GeoDb();
-    }
+    }*/
 
     public DhtListener(String threadName, int port, String shortCode) {
         this.port = port;

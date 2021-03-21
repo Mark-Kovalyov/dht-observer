@@ -23,9 +23,9 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
-@ThreadSafe
-@ManagedResource(objectName="bean:name=mayton.network.dhtobserver.GeoDb")
-@Component
+//@ThreadSafe
+//@ManagedResource(objectName="bean:name=mayton.network.dhtobserver.GeoDb")
+//@Component
 public class GeoDb {
 
     private static Logger logger = LogManager.getLogger(GeoDb.class);

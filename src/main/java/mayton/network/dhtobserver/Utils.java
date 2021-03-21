@@ -3,6 +3,7 @@ package mayton.network.dhtobserver;
 import com.fasterxml.jackson.core.JsonEncoding;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.PrettyPrinter;
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.logging.log4j.LogManager;
@@ -43,9 +44,9 @@ public class Utils {
     }
 
     @NotNull
-    public static String dumpBencodedMapWithJackson(Map<String, Object> res) {
+    public static String dumpBencodedMapWithJackson(Map<String, Object> res, PrettyPrinter prettyPrinter) {
         try {
-            return dumpBencodedMapWithJacksonEx(res);
+            return dumpBencodedMapWithJacksonEx(res, prettyPrinter);
         } catch (IOException e) {
             logger.error("IOException", e);
         }
@@ -105,12 +106,11 @@ public class Utils {
         return true;
     }
 
-    public static String dumpBencodedMapWithJacksonEx(Map<String, Object> res) throws IOException {
+    public static String dumpBencodedMapWithJacksonEx(Map<String, Object> res, PrettyPrinter prettyPrinter) throws IOException {
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
         JsonFactory jfactory = new JsonFactory();
-        JsonGenerator jGenerator;
-        jGenerator = jfactory.createGenerator(stream, JsonEncoding.UTF8);
-        jGenerator.setPrettyPrinter(new DefaultPrettyPrinter());
+        JsonGenerator jGenerator = jfactory.createGenerator(stream, JsonEncoding.UTF8);
+        jGenerator.setPrettyPrinter(prettyPrinter);
         dumpBencodedMapWithJacksonEx(null, res, jGenerator);
         jGenerator.flush();
         stream.flush();

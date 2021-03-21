@@ -32,16 +32,14 @@ public class CassandraChronicler implements Chronicler {
     @PostConstruct
     public void postConstruct() {
         logger.info("postConstruct");
-        // TODO:
-        CqlSession session = CqlSession.builder().withKeyspace(keyspace).build();
+        //session = CqlSession.builder().withKeyspace(keyspace).build();
         logger.info("postConstruct done");
     }
 
     @Override
     public void onPing(@Nonnull Ping command) {
-        logger.debug("onPing with command = {}", command.toString());
-        // TODO:
-        /*try {
+        /*logger.debug("onPing with command = {}", command.toString());
+        try {
             PreparedStatement pst = session.prepare("update nodes_stats set pings_requests = pings_requests + 1 where node_id = ?");
             ResultSet res = session.execute(pst.bind("node_id", command.getId()));
             logger.debug("was applied = {}", res.wasApplied());

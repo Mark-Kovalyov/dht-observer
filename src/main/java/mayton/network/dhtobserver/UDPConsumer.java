@@ -1,5 +1,6 @@
 package mayton.network.dhtobserver;
 
+import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
 import mayton.network.dhtobserver.dht.Ping;
 import mayton.network.dhtobserver.jfr.DhtParseEvent;
 import org.apache.commons.lang3.tuple.Triple;
@@ -100,7 +101,7 @@ public class UDPConsumer implements Runnable {
                 ByteBuffer sendBuffer = encoder.encode(sendMap, 320);
                 byte[] sendBytes = sendBuffer.array();
                 socket.send(new DatagramPacket(sendBytes, sendBytes.length, packet.getAddress(), packet.getPort()));
-                logger.debug("Pong : {}", Utils.dumpBencodedMapWithJackson(sendMap));
+                logger.debug("Pong : {}", Utils.dumpBencodedMapWithJackson(sendMap, new DefaultPrettyPrinter()));
             }
             if (isFindNode(res)) {
                 logger.info("Find_node request detected");
@@ -113,10 +114,8 @@ public class UDPConsumer implements Runnable {
 
             }
 
-
-
             logger.info("OK! with data: {}", binhex(packetData, true));
-            String json = Utils.dumpBencodedMapWithJackson(res);
+            String json = Utils.dumpBencodedMapWithJackson(res, new DefaultPrettyPrinter());
             logger.info("with structure : {}", json);
 
             try(OutputStream fos = new FileOutputStream("out/decoded/udp-packet-" + uuid);
