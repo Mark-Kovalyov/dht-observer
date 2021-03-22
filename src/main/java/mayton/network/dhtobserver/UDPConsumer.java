@@ -1,8 +1,12 @@
 package mayton.network.dhtobserver;
 
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+import mayton.network.dhtobserver.dht.FindNode;
 import mayton.network.dhtobserver.dht.Ping;
 import mayton.network.dhtobserver.jfr.DhtParseEvent;
+import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.lang3.tuple.Triple;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -17,6 +21,8 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -25,7 +31,9 @@ import static mayton.network.dhtobserver.Utils.binhex;
 
 public class UDPConsumer implements Runnable {
 
-    //@Autowired
+    // TODO: How many injectors???
+    private Injector injector = Guice.createInjector(new DhtObserverModule());
+
     private Chronicler chronicler;
 
     private AtomicInteger packetsReceived = new AtomicInteger(0);
@@ -38,10 +46,14 @@ public class UDPConsumer implements Runnable {
 
     private String shortCode; // Thiss is need for logging
 
+    private String destPath = "/bigdata/dht-observer/out";
+
     public UDPConsumer(BlockingQueue<Triple<byte[], InetAddress, Integer>> udpPackets, String threadName, String shortCode) {
         this.udpPackets = udpPackets;
         this.threadName = threadName;
         this.shortCode = shortCode;
+        new File(destPath + "/decoded").mkdirs();
+        new File(destPath + "/non-decoded").mkdirs();
         ThreadContext.put("shortCode", shortCode);
         logger = LogManager.getLogger("dhtlisteners." + shortCode);
     }
@@ -69,13 +81,13 @@ public class UDPConsumer implements Runnable {
     }
 
     void decodeCommand(DatagramPacket packet) {
+        Chronicler chronicler = injector.getInstance(Chronicler.class);
         packetsReceived.incrementAndGet();
         byte[] packetData = packet.getData();
         String uuid = UUID.randomUUID().toString();
         try{
             BDecoder decoder = new BDecoder();
             Map<String, Object> res = decoder.decode(ByteBuffer.wrap(packetData));
-
             logger.info("{} :: Received DHT UDP packet : from {}:{} ({})",
                     threadName,
                     packet.getAddress(),
@@ -83,7 +95,8 @@ public class UDPConsumer implements Runnable {
                     packet.getPort()
             );
 
-            if (isPing(res)) {
+            Optional<Ping> pingCommandOptional = tryToExtractPingCommand(res);
+            if (pingCommandOptional.isPresent()) {
                 // ping Query = {"t":"aa", "y":"q", "q":"ping", "a":{"id":"abcdefghij0123456789"}}
                 // bencoded = d1:ad2:id20:abcdefghij0123456789e1:q4:ping1:t2:aa1:y1:qe
                 //
@@ -102,33 +115,33 @@ public class UDPConsumer implements Runnable {
                 byte[] sendBytes = sendBuffer.array();
                 socket.send(new DatagramPacket(sendBytes, sendBytes.length, packet.getAddress(), packet.getPort()));
                 logger.debug("Pong : {}", Utils.dumpBencodedMapWithJackson(sendMap, new DefaultPrettyPrinter()));
+                chronicler.onPing(pingCommandOptional.get());
             }
-            if (isFindNode(res)) {
+
+            Optional<FindNode> findNodeOptional = tryToExtractFindNode(res);
+            if (findNodeOptional.isPresent()) {
                 logger.info("Find_node request detected");
-
-            }
-
-            Optional<Ping> pingCommand = tryToExtractPingCommand(res);
-            if (pingCommand.isPresent()) {
-                logger.info("Get_peers request detected from id = {}", pingCommand.get().getId());
-
+                chronicler.onFindNode(findNodeOptional.get());
             }
 
             logger.info("OK! with data: {}", binhex(packetData, true));
             String json = Utils.dumpBencodedMapWithJackson(res, new DefaultPrettyPrinter());
             logger.info("with structure : {}", json);
-
-            try(OutputStream fos = new FileOutputStream("out/decoded/udp-packet-" + uuid);
-                PrintWriter pw = new PrintWriter(new FileWriter("out/decoded/udp-packet-" + uuid + ".json"))) {
+            LocalDateTime localDateTime = LocalDateTime.now();
+            String localDateTimeString = localDateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd-hh-mm-ss-n"));
+            try(OutputStream fos = new FileOutputStream(        destPath + "/decoded/udp-packet-" + localDateTimeString + ".dat");
+                PrintWriter pw = new PrintWriter(new FileWriter(destPath + "/decoded/udp-packet-" + localDateTimeString + ".json"))) {
                 fos.write(packet.getData());
                 pw.write(json);
             }
 
+
+
         } catch (Exception ex) {
             logger.warn("!", ex);
-            OutputStream fos = null;
+            OutputStream fos;
             try {
-                fos = new FileOutputStream("out/non-decoded/udp-packet-" + uuid);
+                fos = new FileOutputStream(destPath + "/non-decoded/udp-packet-" + uuid);
                 fos.write(packet.getData());
                 fos.close();
             } catch (IOException e) {
@@ -147,10 +160,35 @@ public class UDPConsumer implements Runnable {
     //  "y" : "71 ( 'q' )"
     // }
     private Optional<Ping> tryToExtractPingCommand(Map<String, Object> res) {
+        // java.lang.ClassCastException: class [B cannot be cast to class java.lang.String ([B and java.lang.String are in module java.base of loader 'bootstrap')
+        //	at mayton.network.dhtobserver.UDPConsumer.tryToExtractPingCommand(UDPConsumer.java:164) ~[dht-observer-0.0.1-SNAPSHOT.jar:?]
+        //	at mayton.network.dhtobserver.UDPConsumer.decodeCommand(UDPConsumer.java:97) [dht-observer-0.0.1-SNAPSHOT.jar:?]
+        //	at mayton.network.dhtobserver.UDPConsumer.run(UDPConsumer.java:72) [dht-observer-0.0.1-SNAPSHOT.jar:?]
+        //	at java.lang.Thread.run(Thread.java:834) [?:?]
         if (res.containsKey("q") && (new String((byte[]) res.get("q")).equals("get_peers"))) {
             Map<String, Object> a = (Map<String, Object>) res.get("a");
-            String id = (String) a.get("id");
-            return Optional.of(new Ping(id));
+            return Optional.of(new Ping(Hex.encodeHexString((byte[]) a.get("id"))));
+        } else {
+            return Optional.empty();
+        }
+    }
+
+    // {
+    //  "a" : {
+    //    "id" : "bb97c5623acdb44a15c088067df3ed19ba1c13d5",
+    //    "target" : "bb97c5623acdb44a15c088067df3ed19ba1c13d5"
+    //  },
+    //  "q" : "66696e645f6e6f6465 ( 'find_node' )",
+    //  "t" : "716e0000",
+    //  "v" : "5554adce",
+    //  "y" : "71 ( 'q' )"
+    //}
+    private Optional<FindNode> tryToExtractFindNode(Map<String, Object> res) {
+        if (res.containsKey("q") && (new String((byte[]) res.get("q")).equals("find_node"))) {
+            Map<String, Object> a = (Map<String, Object>) res.get("a");
+            String id = Hex.encodeHexString(((byte[]) a.get("id")));
+            String target = Hex.encodeHexString(((byte[]) a.get("target")));
+            return Optional.of(new FindNode(id, target));
         } else {
             return Optional.empty();
         }

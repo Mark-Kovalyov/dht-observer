@@ -51,7 +51,14 @@ public class CassandraChronicler implements Chronicler {
 
     @Override
     public void onFindNode(FindNode command) {
-
+        logger.debug("onFindNode with command = {}", command.toString());
+        try {
+            PreparedStatement pst = session.prepare("update targets set x = 1 where target_id=? and node_id=?");
+            ResultSet res = session.execute(pst.bind(command.getTarget(), command.getId()));
+            logger.debug("was applied = {}", res.wasApplied());
+        } catch (Exception ex) {
+            logger.error("!", ex);
+        }
     }
 
     @Override

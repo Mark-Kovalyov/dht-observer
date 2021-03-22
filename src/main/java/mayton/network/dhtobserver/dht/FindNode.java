@@ -8,14 +8,20 @@ import javax.annotation.concurrent.Immutable;
 public class FindNode implements DhtEvent {
 
     private final String id;
+    private final String target;
 
-    public FindNode(String id) {
+    public FindNode(String id, String target) {
         this.id = id;
+        this.target = target;
     }
 
     @NotNull
     @Override
     public String getId() {
         return id;
+    }
+
+    public String getTarget() {
+        return target;
     }
 }

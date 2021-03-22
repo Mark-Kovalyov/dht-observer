@@ -89,12 +89,13 @@ public class DhtObserverApplication {
         System.setProperty("log4j.configurationFile","log4j2.xml");
         System.out.printf("LogManager.context = %s\n", LogManager.getContext(true));
         Injector injector = Guice.createInjector(new DhtObserverModule());
-        Chronicler chronicler = injector.getInstance(Chronicler.class);
-        chronicler.onPing(new Ping(UUID.randomUUID().toString()));
+        //Chronicler chronicler = injector.getInstance(Chronicler.class);
+        //chronicler.onPing(new Ping(UUID.randomUUID().toString()));
         logger.info(":: start with user.dir = {}", getProperty("user.dir"));
         //SpringApplication springApplication = new SpringApplication(DhtObserverApplication.class);
         //springApplication.addListeners(new ApplicationPidFileWriter("./dht-observer-app.pid"));
         //springApplication.run(args);
+        new DhtObserverApplication();
 	}
 
     //@PreDestroy
