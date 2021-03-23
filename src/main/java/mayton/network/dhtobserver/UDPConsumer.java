@@ -3,7 +3,9 @@ package mayton.network.dhtobserver;
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import mayton.network.NetworkUtils;
 import mayton.network.dhtobserver.dht.FindNode;
+import mayton.network.dhtobserver.dht.GetPeers;
 import mayton.network.dhtobserver.dht.Ping;
 import mayton.network.dhtobserver.jfr.DhtParseEvent;
 import org.apache.commons.codec.binary.Hex;
@@ -47,6 +49,8 @@ public class UDPConsumer implements Runnable {
     private String shortCode; // Thiss is need for logging
 
     private String destPath = "/bigdata/dht-observer/out";
+
+    private int TTL = 24 * 60 * 60; // seconds in day
 
     public UDPConsumer(BlockingQueue<Triple<byte[], InetAddress, Integer>> udpPackets, String threadName, String shortCode) {
         this.udpPackets = udpPackets;
@@ -95,7 +99,7 @@ public class UDPConsumer implements Runnable {
                     packet.getPort()
             );
 
-            Optional<Ping> pingCommandOptional = tryToExtractPingCommand(res);
+            Optional<Ping> pingCommandOptional = tryToExtractPingCommand(res, packet);
             if (pingCommandOptional.isPresent()) {
                 // ping Query = {"t":"aa", "y":"q", "q":"ping", "a":{"id":"abcdefghij0123456789"}}
                 // bencoded = d1:ad2:id20:abcdefghij0123456789e1:q4:ping1:t2:aa1:y1:qe
@@ -116,13 +120,18 @@ public class UDPConsumer implements Runnable {
                 socket.send(new DatagramPacket(sendBytes, sendBytes.length, packet.getAddress(), packet.getPort()));
                 logger.debug("Pong : {}", Utils.dumpBencodedMapWithJackson(sendMap, new DefaultPrettyPrinter()));
                 chronicler.onPing(pingCommandOptional.get());
+            } else {
+
+                Optional<FindNode> findNodeOptional = tryToExtractFindNode(res, packet);
+                if (findNodeOptional.isPresent()) {
+                    logger.info("Find_node request detected");
+                    chronicler.onFindNode(findNodeOptional.get());
+                } else {
+                    Optional<GetPeers> getPeersOptional = extractGetPeers(res, packet);
+                }
+
             }
 
-            Optional<FindNode> findNodeOptional = tryToExtractFindNode(res);
-            if (findNodeOptional.isPresent()) {
-                logger.info("Find_node request detected");
-                chronicler.onFindNode(findNodeOptional.get());
-            }
 
             logger.info("OK! with data: {}", binhex(packetData, true));
             String json = Utils.dumpBencodedMapWithJackson(res, new DefaultPrettyPrinter());
@@ -134,7 +143,6 @@ public class UDPConsumer implements Runnable {
                 fos.write(packet.getData());
                 pw.write(json);
             }
-
 
 
         } catch (Exception ex) {
@@ -159,15 +167,22 @@ public class UDPConsumer implements Runnable {
     //  "v" : "4c540101",
     //  "y" : "71 ( 'q' )"
     // }
-    private Optional<Ping> tryToExtractPingCommand(Map<String, Object> res) {
-        // java.lang.ClassCastException: class [B cannot be cast to class java.lang.String ([B and java.lang.String are in module java.base of loader 'bootstrap')
-        //	at mayton.network.dhtobserver.UDPConsumer.tryToExtractPingCommand(UDPConsumer.java:164) ~[dht-observer-0.0.1-SNAPSHOT.jar:?]
-        //	at mayton.network.dhtobserver.UDPConsumer.decodeCommand(UDPConsumer.java:97) [dht-observer-0.0.1-SNAPSHOT.jar:?]
-        //	at mayton.network.dhtobserver.UDPConsumer.run(UDPConsumer.java:72) [dht-observer-0.0.1-SNAPSHOT.jar:?]
-        //	at java.lang.Thread.run(Thread.java:834) [?:?]
+
+    // {
+    //  "a" : {
+    //    "id" : "16b4dd510541214124bc6c953d162a8206b28d8a"
+    //  },
+    //  "q" : "70696e67 ( 'ping' )",
+    //  "t" : "0e6bf8e3",
+    //  "v" : "55547021 ( 'UTp!' )",
+    //  "y" : "71 ( 'q' )"
+    //}
+    private Optional<Ping> tryToExtractPingCommand(Map<String, Object> res, DatagramPacket packet) {
         if (res.containsKey("q") && (new String((byte[]) res.get("q")).equals("get_peers"))) {
             Map<String, Object> a = (Map<String, Object>) res.get("a");
-            return Optional.of(new Ping(Hex.encodeHexString((byte[]) a.get("id"))));
+            return Optional.of(new Ping(
+                    Hex.encodeHexString((byte[]) a.get("id")),
+                    packet.getAddress().getHostAddress() + ":" + packet.getPort()));
         } else {
             return Optional.empty();
         }
@@ -183,29 +198,26 @@ public class UDPConsumer implements Runnable {
     //  "v" : "5554adce",
     //  "y" : "71 ( 'q' )"
     //}
-    private Optional<FindNode> tryToExtractFindNode(Map<String, Object> res) {
+    private Optional<FindNode> tryToExtractFindNode(Map<String, Object> res, DatagramPacket packet) {
         if (res.containsKey("q") && (new String((byte[]) res.get("q")).equals("find_node"))) {
             Map<String, Object> a = (Map<String, Object>) res.get("a");
             String id = Hex.encodeHexString(((byte[]) a.get("id")));
             String target = Hex.encodeHexString(((byte[]) a.get("target")));
-            return Optional.of(new FindNode(id, target));
+            return Optional.of(new FindNode(id, target, packet.getAddress().getHostAddress() + ":" + packet.getPort()));
         } else {
             return Optional.empty();
         }
     }
 
-    @Deprecated
-    private boolean isGetPeers(Map<String, Object> res) {
-        return res.containsKey("q") && (new String((byte[]) res.get("q")).equals("get_peers"));
+    private Optional<GetPeers> extractGetPeers(Map<String, Object> res, DatagramPacket packet) {
+        if (res.containsKey("q") && (new String((byte[]) res.get("q")).equals("get_peers"))) {
+            //Map<String, Object> a = (Map<String, Object>) res.get("a");
+            //String id = Hex.encodeHexString(((byte[]) a.get("id")));
+            //String target = Hex.encodeHexString(((byte[]) a.get("target")));
+            return Optional.of(new GetPeers(""));
+        } else {
+            return Optional.empty();
+        }
     }
 
-    @Deprecated
-    private boolean isFindNode(Map<String, Object> res) {
-        return res.containsKey("q") && (new String((byte[]) res.get("q")).equals("find_node"));
-    }
-
-    @Deprecated
-    private boolean isPing(Map<String, Object> res) {
-        return res.containsKey("q") && (new String((byte[]) res.get("q")).equals("ping"));
-    }
 }

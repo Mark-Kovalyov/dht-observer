@@ -9,11 +9,14 @@ public class FindNode implements DhtEvent {
 
     private final String id;
     private final String target;
+    private final String hostAndPort;
 
-    public FindNode(String id, String target) {
+    public FindNode(String id, String target, String hostAndPort) {
         this.id = id;
         this.target = target;
+        this.hostAndPort = hostAndPort;
     }
+
 
     @NotNull
     @Override
@@ -23,5 +26,18 @@ public class FindNode implements DhtEvent {
 
     public String getTarget() {
         return target;
+    }
+
+    @Override
+    public String toString() {
+        return "FindNode{" +
+                "id='" + id + '\'' +
+                ", target='" + target + '\'' +
+                ", hostAndPort='" + hostAndPort + '\'' +
+                '}';
+    }
+
+    public String getHostAndPort() {
+        return hostAndPort;
     }
 }

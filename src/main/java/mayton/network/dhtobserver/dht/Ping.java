@@ -9,8 +9,11 @@ public class Ping implements DhtEvent {
 
     private final String id;
 
-    public Ping(String id) {
+    private final String lastHostAndPort;
+
+    public Ping(String id, String lastHostAndPort) {
         this.id = id;
+        this.lastHostAndPort = lastHostAndPort;
     }
 
     @NotNull
@@ -19,10 +22,16 @@ public class Ping implements DhtEvent {
         return id;
     }
 
+
+    public String getLastHostAndPort() {
+        return lastHostAndPort;
+    }
+
     @Override
     public String toString() {
         return "Ping{" +
                 "id='" + id + '\'' +
+                ", lastIp='" + lastHostAndPort + '\'' +
                 '}';
     }
 }
