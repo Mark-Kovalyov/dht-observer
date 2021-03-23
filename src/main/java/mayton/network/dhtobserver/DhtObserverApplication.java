@@ -3,56 +3,40 @@ package mayton.network.dhtobserver;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import mayton.network.dhtobserver.dht.Ping;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 
 import static java.lang.System.getProperty;
-import static java.lang.System.in;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
-//@SpringBootApplication
 public class DhtObserverApplication {
 
     static Logger logger = LogManager.getLogger(DhtObserverApplication.class);
 
-    //@Autowired
     public DhtListener dhtListenerVuze16680() {
         return new DhtListener("Vuze", 16680, "VZ1");
     }
-
-    //@Autowired
     public DhtListener dhtListenerVuze49001() {
         return new DhtListener("Vuze", 49001, "VZ2");
     }
-
-    //@Autowired
     public DhtListener dhtListenerAmule4665() {
         return new DhtListener("A-Mule", 4665, "AM1");
     }
-
-    //@Autowired
     public DhtListener dhtListenerAmule4672() {
         return new DhtListener("A-Mule", 4672, "AM2");
     }
-
-    //@Autowired
     public DhtListener dhtListenerTransmission51413() {
         return new DhtListener("Transm", 51413, "TR1");
     }
-
     public DhtListener dhtListenerTransmission48529() {
         return new DhtListener("Transm", 48529, "TR3");
     }
-
-    //@Autowired
     public DhtListener dhtListenerTorrent46434() {
         return new DhtListener("Transm", 46434, "TR2");
     }
@@ -88,7 +72,7 @@ public class DhtObserverApplication {
 	public static void main(String[] args) {
         System.setProperty("log4j.configurationFile","log4j2.xml");
         System.out.printf("LogManager.context = %s\n", LogManager.getContext(true));
-        Injector injector = Guice.createInjector(new DhtObserverModule());
+        Injector injector = Guice.createInjector(DhtObserverModule.dhtObserverModule);
         //Chronicler chronicler = injector.getInstance(Chronicler.class);
         //chronicler.onPing(new Ping(UUID.randomUUID().toString()));
         logger.info(":: start with user.dir = {}", getProperty("user.dir"));

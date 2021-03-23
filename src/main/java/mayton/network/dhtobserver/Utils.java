@@ -4,14 +4,14 @@ import com.fasterxml.jackson.core.JsonEncoding;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.PrettyPrinter;
-import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
-import java.math.BigInteger;
+import java.net.Inet4Address;
+import java.net.InetAddress;
 import java.util.*;
 
 import static java.lang.String.format;
@@ -19,6 +19,15 @@ import static java.lang.String.format;
 public class Utils {
 
     static Logger logger = LogManager.getLogger(Utils.class);
+
+    public static long fromInetAddress(InetAddress inetAddress) {
+        byte[] addr = inetAddress.getAddress();
+        if (inetAddress instanceof Inet4Address) {
+            return addr[0] * 256L * 256L * 256L + addr[1] * 256L * 256L + addr[2] * 256 + addr[3];
+        } else {
+            throw new RuntimeException("Unsupported non IPv4 address!");
+        }
+    }
 
     public static String wrapValue(Object value) {
         if (value instanceof byte[]) {
@@ -54,10 +63,11 @@ public class Utils {
     }
 
     public static void dumpBencodedMapWithJacksonEx(String rootName, Map<String, Object> res, JsonGenerator jGenerator) throws IOException {
-        if (rootName == null)
-             jGenerator.writeStartObject();
-        else
-             jGenerator.writeObjectFieldStart(rootName);
+        if (rootName == null) {
+            jGenerator.writeStartObject();
+        } else {
+            jGenerator.writeObjectFieldStart(rootName);
+        }
 
         for (Map.Entry<String, Object> item : res.entrySet()) {
             Object value = item.getValue();
@@ -65,6 +75,8 @@ public class Utils {
                 jGenerator.writeStringField(item.getKey(), (String) value);
             } else if (value instanceof Integer) {
                 jGenerator.writeNumberField(item.getKey(), (Integer) item.getValue());
+            } else if (value instanceof Long) {
+                jGenerator.writeNumberField(item.getKey(), (Long) item.getValue());
             } else if (value instanceof List) {
                 jGenerator.writeArrayFieldStart(item.getKey());
                 for (Object o : (List) value) {
@@ -73,7 +85,7 @@ public class Utils {
                     } else if (o instanceof String) {
                         jGenerator.writeString((String) o);
                     } else {
-                        logger.warn("Unable to detect value class = {}", o.getClass().toString());
+                        logger.error("Unable to detect value class = {} during array generation", o.getClass().toString());
                     }
                 }
                 jGenerator.writeEndArray();
@@ -84,7 +96,7 @@ public class Utils {
                 // "q" : "ping"
                 jGenerator.writeStringField(item.getKey(), beautifyBlob((byte[]) value));
             } else {
-                logger.warn("Unable to detect value class = {}", value.getClass());
+                logger.error("Unable to detect value class = {} during map generation", value.getClass());
             }
         }
         jGenerator.writeEndObject();

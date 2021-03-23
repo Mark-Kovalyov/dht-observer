@@ -6,4 +6,6 @@ public class Constants {
     // magnet:?xt=urn:btih:B05EAAD679E38D27172BD1E079C1A8F74FB24544
     public static final String PEER_ID = "8573195880de48268c84cd58bcc5a19b";
 
+    public static final String DHT_EVEN_TYPE = "dhteventtype";
+
 }

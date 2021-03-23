@@ -1,4 +1,4 @@
-package mayton.network.dhtobserver;
+package mayton.network.dhtobserver.geo;
 
 import mayton.network.NetworkUtils;
 
@@ -8,9 +8,9 @@ import java.util.Comparator;
 @Immutable
 public final class GeoRecord {
 
-    public static Comparator<GeoRecord> beginIpComparator = (GeoRecord r1, GeoRecord r2) -> { return Long.compare(r1.beginIp, r2.beginIp ); };
+    public static Comparator<GeoRecord> beginIpComparator = Comparator.comparingLong((GeoRecord r) -> r.beginIp);
 
-    public static Comparator<GeoRecord> endIpComparator = (GeoRecord r1, GeoRecord r2) -> { return Long.compare(r1.endIp, r2.endIp ); };
+    public static Comparator<GeoRecord> endIpComparator = Comparator.comparingLong((GeoRecord r) -> r.endIp);
 
     public final String country;
 

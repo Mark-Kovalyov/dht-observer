@@ -1,4 +1,4 @@
-#!/bin/bash -v
+#!/bin/bash -ev
 
 mvn clean package
 mvn install dependency:copy-dependencies

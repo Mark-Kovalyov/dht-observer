@@ -12,7 +12,14 @@
             </PatternLayout>
         </File>
 
-        <File name="GeoDbFileAppender" fileName="./logs/geo-db.log" append="false">
+        <File name="CassandraAppender" fileName="./logs/cassandra.log" append="false">
+            <PatternLayout>
+                <Pattern>%d{yyyy-MM-dd HH:mm:ss} [%-5p] %-3tid : %c{1} %m%n</Pattern>
+            </PatternLayout>
+        </File>
+
+        <File name="PgSecuredAppender" fileName="./logs/postgres.log" append="false">
+            <MarkerFilter marker="SECURED" onMatch="DENY" onMismatch="NEUTRAL"/>
             <PatternLayout>
                 <Pattern>%d{yyyy-MM-dd HH:mm:ss} [%-5p] %-3tid : %c{1} %m%n</Pattern>
             </PatternLayout>
@@ -45,8 +52,8 @@
             <AppenderRef ref="MainFileAppender" level="info"/>
         </Root>
 
-        <Logger name="mayton.network.dhtobserver.GeoDb" level="trace" additivity="false">
-            <AppenderRef ref="GeoDbFileAppender"/>
+        <Logger name="mayton.network.dhtobserver.db.cassandra" level="trace" additivity="false">
+            <AppenderRef ref="CassandraAppender"/>
         </Logger>
 
         <Logger name="dhtlisteners" level="trace" additivity="true">
