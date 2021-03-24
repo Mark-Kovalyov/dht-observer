@@ -31,7 +31,7 @@ public class GeoDbImpl implements GeoDb {
             Iterator<CSVRecord> i = csvParser.iterator();
             int cnt = 0;
             i.next();
-            while(i.hasNext()) {
+            /*while(i.hasNext()) {
                 CSVRecord record = i.next();
                 String country = record.get(2);
                 String city = record.get(4);
@@ -39,7 +39,7 @@ public class GeoDbImpl implements GeoDb {
                 long end = NetworkUtils.parseIpV4(record.get(1));
                 geoRecords.add(new GeoRecord(country, city, begin, end));
                 cnt++;
-            }
+            }*/
             logger.info("init CSV records loaded. Sorting..");
             geoRecords.sort(GeoRecord.beginIpComparator);
             logger.info("init done, {} records loaded and sorted", cnt);

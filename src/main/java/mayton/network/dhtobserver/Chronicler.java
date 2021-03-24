@@ -26,4 +26,6 @@ public interface Chronicler {
 
     void onAnnouncePeer(@Nonnull AnnouncePeer command);
 
+    void close();
+
 }

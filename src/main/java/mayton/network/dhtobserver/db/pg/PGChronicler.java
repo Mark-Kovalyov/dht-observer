@@ -43,5 +43,10 @@ public class PGChronicler implements Chronicler {
 
     }
 
+    @Override
+    public void close() {
+
+    }
+
 
 }

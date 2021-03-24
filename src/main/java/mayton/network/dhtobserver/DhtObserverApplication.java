@@ -3,6 +3,8 @@ package mayton.network.dhtobserver;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.Key;
+import com.google.inject.name.Names;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -73,6 +75,16 @@ public class DhtObserverApplication {
         System.setProperty("log4j.configurationFile","log4j2.xml");
         System.out.printf("LogManager.context = %s\n", LogManager.getContext(true));
         Injector injector = Guice.createInjector(DhtObserverModule.dhtObserverModule);
+        Thread shutdownHook = new Thread(() -> {
+            logger.warn("Shutdown hook called!");
+            //injector.getInstance(Key.get(Chronicler.class, Names.named("cassandra")));
+            //injector.getInstance(Key.get(Reporter.class, Names.named("cassandra")));
+            injector.getInstance(Chronicler.class).close();
+            injector.getInstance(Reporter.class).close();
+            logger.warn("Shutdown finished!");
+        });
+        Runtime.getRuntime().addShutdownHook(shutdownHook);
+
         //Chronicler chronicler = injector.getInstance(Chronicler.class);
         //chronicler.onPing(new Ping(UUID.randomUUID().toString()));
         logger.info(":: start with user.dir = {}", getProperty("user.dir"));

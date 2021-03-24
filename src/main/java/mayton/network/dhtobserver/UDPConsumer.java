@@ -3,7 +3,8 @@ package mayton.network.dhtobserver;
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import mayton.network.NetworkUtils;
+import com.google.inject.Key;
+import com.google.inject.name.Names;
 import mayton.network.dhtobserver.dht.AnnouncePeer;
 import mayton.network.dhtobserver.dht.FindNode;
 import mayton.network.dhtobserver.dht.GetPeers;
@@ -16,6 +17,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.ThreadContext;
 
+import org.openjdk.jol.vm.VM;
 import org.slf4j.MDC;
 import the8472.bencode.BDecoder;
 import the8472.bencode.BEncoder;
@@ -31,6 +33,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 import static mayton.network.dhtobserver.Constants.DHT_EVEN_TYPE;
 import static mayton.network.dhtobserver.Utils.binhex;
@@ -42,9 +45,13 @@ public class UDPConsumer implements Runnable {
 
     private Chronicler chronicler;
 
+    private Reporter reporter;
+
+    private GeoDb geoDb;
+
     private AtomicInteger packetsReceived = new AtomicInteger(0);
 
-    private Logger logger = LogManager.getLogger(UDPConsumer.class);
+    private Logger logger;
 
     private BlockingQueue<Triple<byte[], InetAddress, Integer>> udpPackets;
 
@@ -53,6 +60,8 @@ public class UDPConsumer implements Runnable {
     private String shortCode; // Thiss is need for logging
 
     private String destPath = "/bigdata/dht-observer/out";
+
+    private Random random = new Random();
 
     public UDPConsumer(BlockingQueue<Triple<byte[], InetAddress, Integer>> udpPackets, String threadName, String shortCode) {
         this.udpPackets = udpPackets;
@@ -64,9 +73,13 @@ public class UDPConsumer implements Runnable {
         logger = LogManager.getLogger("dhtlisteners." + shortCode);
     }
 
-
     @Override
     public void run() {
+        chronicler = injector.getInstance(Chronicler.class);
+        geoDb = injector.getInstance(GeoDb.class);
+        //String.format("08X", VM.current().addressOf(geoDb)));
+        logger.info("Created geoDb instance with objectHashCode = {}, systemHashCode = {}", ((Object)geoDb).hashCode(), System.identityHashCode(geoDb));
+        reporter = injector.getInstance(Reporter.class);
         while(!Thread.currentThread().isInterrupted()) {
             try {
                 logger.trace("Consume...");
@@ -87,28 +100,25 @@ public class UDPConsumer implements Runnable {
     }
 
     String generateRandomToken() {
-        Random r = new Random();
         StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < 8; i++) sb.append('a' + r.nextInt('z' - 'a'));
+        for (int i = 0; i < 8; i++) sb.append('a' + random.nextInt('z' - 'a'));
         return sb.toString();
     }
 
+    @SuppressWarnings("java:S2629")
     void decodeCommand(DatagramPacket packet) {
         LocalDateTime localDateTime = LocalDateTime.now();
         String localDateTimeString = localDateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd-hh-mm-ss-n"));
-        Chronicler chronicler = injector.getInstance(Chronicler.class);
         packetsReceived.incrementAndGet();
         byte[] packetData = packet.getData();
         try{
             BDecoder decoder = new BDecoder();
             Map<String, Object> res = decoder.decode(ByteBuffer.wrap(packetData));
-            logger.info("{} :: Received DHT UDP packet : from {}:{} ({})",
+            logger.info("{} :: Received DHT UDP packet : from {}:{}",
                     threadName,
                     packet.getAddress(),
-                    "{}", //geoDb().decodeCountryCity(packet.getAddress().getHostAddress()),
                     packet.getPort()
             );
-            GeoDb geoDb = injector.getInstance(GeoDb.class);
             Optional<GeoRecord> geoRecordOptional = geoDb.findFirst(fromInetAddress(packet.getAddress()));
             Optional<Ping> pingCommandOptional = tryToExtractPingCommand(res, packet, geoRecordOptional);
             if (pingCommandOptional.isPresent()) {
@@ -119,19 +129,19 @@ public class UDPConsumer implements Runnable {
                 // Response = {"t":"aa", "y":"r", "r": {"id":"mnopqrstuvwxyz123456"}}
                 // bencoded = d1:rd2:id20:mnopqrstuvwxyz123456e1:t2:aa1:y1:re
                 logger.info("Ping detected");
-                DatagramSocket socket = new DatagramSocket();
-                BEncoder encoder = new BEncoder();
-                // Alphabet order of keys!!
-                Map<String, Object> sendMap = new TreeMap<>();
-                    sendMap.put("r", Collections.singletonMap("id", Constants.PEER_ID));
-                    sendMap.put("t", "aa".getBytes(StandardCharsets.UTF_8));
-                    sendMap.put("y", "r".getBytes(StandardCharsets.UTF_8));
+                try(DatagramSocket socket = new DatagramSocket()) {
+                    BEncoder encoder = new BEncoder();
+                    Map<String, Object> sendMap = new TreeMap<>();
+                        sendMap.put("r", Collections.singletonMap("id", Constants.PEER_ID));
+                        sendMap.put("t", "aa".getBytes(StandardCharsets.UTF_8));
+                        sendMap.put("y", "r".getBytes(StandardCharsets.UTF_8));
 
-                // TODO: Refactor code duplications
-                ByteBuffer sendBuffer = encoder.encode(sendMap, 320);
-                byte[] sendBytes = sendBuffer.array();
-                socket.send(new DatagramPacket(sendBytes, sendBytes.length, packet.getAddress(), packet.getPort()));
-                logger.debug("Pong : {}", Utils.dumpBencodedMapWithJackson(sendMap, new DefaultPrettyPrinter()));
+                    // TODO: Refactor code duplications
+                    ByteBuffer sendBuffer = encoder.encode(sendMap, 320);
+                    byte[] sendBytes = sendBuffer.array();
+                    socket.send(new DatagramPacket(sendBytes, sendBytes.length, packet.getAddress(), packet.getPort()));
+                    logger.debug("Pong : {}", Utils.dumpBencodedMapWithJackson(sendMap, new DefaultPrettyPrinter()));
+                }
                 chronicler.onPing(pingCommandOptional.get());
             } else {
                 Optional<FindNode> findNodeOptional = tryToExtractFindNode(res, packet, geoRecordOptional);
@@ -150,21 +160,21 @@ public class UDPConsumer implements Runnable {
                         Map<String, Object> sendMap = new TreeMap<>();
                             sendMap.put("id", sender_node_id);
                             sendMap.put("token", generateRandomToken());
+                            sendMap.put("values", reporter.knownPeers().stream().limit(10).collect(Collectors.toList()));
                             
-                        DatagramSocket socket = new DatagramSocket();
-                        BEncoder encoder = new BEncoder();
-                        ByteBuffer sendBuffer = encoder.encode(sendMap, 320);
-                        byte[] sendBytes = sendBuffer.array();
-                        // TODO: Finish
-                        //socket.send(new DatagramPacket(sendBytes, sendBytes.length, packet.getAddress(), packet.getPort()));
-                        //logger.debug("Pong : {}", Utils.dumpBencodedMapWithJackson(sendMap, new DefaultPrettyPrinter()));
+                        try (DatagramSocket socket = new DatagramSocket()) {
+                            BEncoder encoder = new BEncoder();
+                            ByteBuffer sendBuffer = encoder.encode(sendMap, 320);
+                            byte[] sendBytes = sendBuffer.array();
+                            // TODO: Finish
+                            //socket.send(new DatagramPacket(sendBytes, sendBytes.length, packet.getAddress(), packet.getPort()));
+                        }
+                        logger.debug("Pong : {}", Utils.dumpBencodedMapWithJackson(sendMap, new DefaultPrettyPrinter()));
                     } else {
                         Optional<AnnouncePeer> optionalAnnouncePeer = extractAnnounce(res, packet, geoRecordOptional);
                         if (optionalAnnouncePeer.isPresent()) {
                             MDC.put(DHT_EVEN_TYPE, AnnouncePeer.class.getName());
                             // announce_peers Query = {"t":"aa", "y":"q", "q":"announce_peer", "a": {"id":"abcdefghij0123456789", "implied_port": 1, "info_hash":"mnopqrstuvwxyz123456", "port": 6881, "token": "aoeusnth"}}
-                            //
-                            //
                             // Response = {"t":"aa", "y":"r", "r": {"id":"mnopqrstuvwxyz123456"}}
                             // TODO: Refactor
                             Map<String, Object> sendMap = new TreeMap<>();
@@ -172,6 +182,8 @@ public class UDPConsumer implements Runnable {
                                 sendMap.put("y", "r".getBytes(StandardCharsets.UTF_8));
                                 sendMap.put("r", "");
                             chronicler.onAnnouncePeer(optionalAnnouncePeer.get());
+                        } else {
+                            logger.warn("Unknown message type : {}", Utils.dumpBencodedMapWithJackson(res, new DefaultPrettyPrinter()));
                         }
                     }
                 }
@@ -188,16 +200,12 @@ public class UDPConsumer implements Runnable {
                 pw.write(json);
             }
 
-
         } catch (Exception ex) {
             logger.warn("!", ex);
-            OutputStream fos;
-            try {
-                fos = new FileOutputStream(destPath + "/non-decoded/udp-packet-" + localDateTimeString + ".dat");
+            try (OutputStream fos = new FileOutputStream(destPath + "/non-decoded/udp-packet-" + localDateTimeString + ".dat")) {
                 fos.write(packet.getData());
-                fos.close();
             } catch (IOException e) {
-                e.printStackTrace();
+                logger.warn("!", e);
             }
         } finally {
             MDC.remove(DHT_EVEN_TYPE);

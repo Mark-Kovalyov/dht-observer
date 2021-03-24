@@ -30,9 +30,7 @@ public class CassandraChronicler implements Chronicler {
 
     @Inject
     public void init() {
-        logger.info("postConstruct");
         session = CqlSession.builder().withKeyspace(keyspace).build();
-        logger.info("postConstruct done");
     }
 
     private boolean sessionAction(String cqlCommand, Object... arguments) {
@@ -136,5 +134,14 @@ public class CassandraChronicler implements Chronicler {
         } catch (Exception ex) {
             logger.error("!", ex);
         }
+    }
+
+    @Override
+    public void close() {
+        session.close();
+    }
+
+    public void destroy() {
+        session.close();
     }
 }

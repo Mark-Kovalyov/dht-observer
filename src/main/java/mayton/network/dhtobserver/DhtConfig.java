@@ -1,11 +1,7 @@
 package mayton.network.dhtobserver;
 
-import java.util.Map;
+public interface DhtConfig {
 
-//@Component
-//@ConfigurationProperties(prefix = "dhtconfig")
-public class DhtConfig {
-
-    Map<String, DhtConfigParams> paramsMap;
+    String getParameter(String key);
 
 }

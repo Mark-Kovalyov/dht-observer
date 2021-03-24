@@ -12,6 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.*;
 import java.net.Inet4Address;
 import java.net.InetAddress;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 import static java.lang.String.format;
@@ -126,7 +127,7 @@ public class Utils {
         dumpBencodedMapWithJacksonEx(null, res, jGenerator);
         jGenerator.flush();
         stream.flush();
-        return new String(stream.toByteArray());
+        return stream.toString(StandardCharsets.UTF_8);
     }
 
     @NotNull

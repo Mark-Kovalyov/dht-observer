@@ -1,36 +1,20 @@
 package mayton.network.dhtobserver;
 
-import bt.bencoding.BEParser;
-import com.github.soulaway.beecoder.BeeCoder;
-import mayton.network.dhtobserver.jfr.DhtParseEvent;
 import org.apache.commons.lang3.tuple.Triple;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.ThreadContext;
-import org.apache.logging.log4j.core.util.NullOutputStream;
-
-import the8472.bencode.BDecoder;
-
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.ObjectOutputStream;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
-import java.nio.ByteBuffer;
 import java.util.Arrays;
-import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import static mayton.network.dhtobserver.Utils.binhex;
 
 public class DhtListener implements Runnable, DhtListenerMBean {
 
     private Logger logger;
-
-    private AtomicInteger tomashRejected = new AtomicInteger(0);
 
     private BlockingQueue<Triple<byte[], InetAddress, Integer>> udpPackets;
 
@@ -41,10 +25,7 @@ public class DhtListener implements Runnable, DhtListenerMBean {
 
     private Thread udpConsumerThread;
 
-/*    @Autowired
-    private GeoDb geoDb() {
-        return new GeoDb();
-    }*/
+
 
     public DhtListener(String threadName, int port, String shortCode) {
         this.port = port;
