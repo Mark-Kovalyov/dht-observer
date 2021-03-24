@@ -1,0 +1,6 @@
+#!/bin/bash -v
+
+mvn compile quarkus:dev
+
+
+
