@@ -141,7 +141,4 @@ public class CassandraChronicler implements Chronicler {
         session.close();
     }
 
-    public void destroy() {
-        session.close();
-    }
 }

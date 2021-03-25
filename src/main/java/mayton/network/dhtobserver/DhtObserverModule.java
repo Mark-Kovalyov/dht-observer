@@ -33,5 +33,9 @@ public class DhtObserverModule extends AbstractModule {
         bind(Reporter.class)
                 .to(CassandraReporter.class)
                 .in(Scopes.SINGLETON);
+
+        bind(ExecutorServiceProvider.class)
+                .to(ExecutorServiceProviderImpl.class)
+                .in(Scopes.SINGLETON);
     }
 }

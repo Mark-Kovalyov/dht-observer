@@ -6,6 +6,20 @@
             <PatternLayout pattern="%highlight{[%-5p] %-3tid : %c{1} %m%n}{FATAL=Bright red blink, ERROR=Bright red, WARN=Bright yellow, INFO=Bright green, DEBUG=Bright cyan, TRACE=Bright cyan}"/>
         </Console>
 
+        <RollingFile
+                name="Archive"
+                fileName="/bigdata/dht-observer/logs/application.log"
+                filePattern="/bigdata/dht-observer/logs/application.%d{yyyy-MM-dd-HH}.log.gz"
+                ignoreExceptions="true">
+            <PatternLayout>
+                <Pattern>%d{yyyy-MM-dd HH:mm:ss} [%-5p] %-3tid : %c{1} %m%n</Pattern>
+            </PatternLayout>
+            <Policies>
+                <TimeBasedTriggeringPolicy interval="1"/>
+            </Policies>
+            <!--DefaultRolloverStrategy max="5" /-->
+        </RollingFile>
+
         <File name="MainFileAppender" fileName="./logs/dht-observer.log" append="false">
             <PatternLayout>
                 <Pattern>%d{yyyy-MM-dd HH:mm:ss} [%-5p] %-3tid : %c{1} %m%n</Pattern>
@@ -50,6 +64,7 @@
         <Root level="info">
             <AppenderRef ref="Console" level="info"/>
             <AppenderRef ref="MainFileAppender" level="info"/>
+            <AppenderRef ref="Archive" level="info"/>
         </Root>
 
         <Logger name="mayton.network.dhtobserver.db.cassandra" level="trace" additivity="false">

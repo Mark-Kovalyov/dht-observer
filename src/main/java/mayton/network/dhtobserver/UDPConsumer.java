@@ -41,8 +41,6 @@ import static mayton.network.dhtobserver.Utils.fromInetAddress;
 
 public class UDPConsumer implements Runnable {
 
-    private Injector injector = Guice.createInjector(DhtObserverModule.dhtObserverModule);
-
     private Chronicler chronicler;
 
     private Reporter reporter;
@@ -75,11 +73,9 @@ public class UDPConsumer implements Runnable {
 
     @Override
     public void run() {
-        chronicler = injector.getInstance(Chronicler.class);
-        geoDb = injector.getInstance(GeoDb.class);
-        //String.format("08X", VM.current().addressOf(geoDb)));
-        logger.info("Created geoDb instance with objectHashCode = {}, systemHashCode = {}", ((Object)geoDb).hashCode(), System.identityHashCode(geoDb));
-        reporter = injector.getInstance(Reporter.class);
+        chronicler = DhtObserverApplication.injector.getInstance(Chronicler.class);
+        geoDb = DhtObserverApplication.injector.getInstance(GeoDb.class);
+        reporter = DhtObserverApplication.injector.getInstance(Reporter.class);
         while(!Thread.currentThread().isInterrupted()) {
             try {
                 logger.trace("Consume...");

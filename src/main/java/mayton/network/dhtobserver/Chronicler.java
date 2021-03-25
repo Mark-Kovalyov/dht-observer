@@ -4,7 +4,7 @@ import mayton.network.dhtobserver.dht.*;
 
 import javax.annotation.Nonnull;
 
-public interface Chronicler {
+public interface Chronicler extends AutoCloseable {
 
     default void onEvent(@Nonnull DhtEvent command) {
         if (command instanceof Ping) {
@@ -25,7 +25,5 @@ public interface Chronicler {
     void onGetPeers(@Nonnull GetPeers command);
 
     void onAnnouncePeer(@Nonnull AnnouncePeer command);
-
-    void close();
 
 }
