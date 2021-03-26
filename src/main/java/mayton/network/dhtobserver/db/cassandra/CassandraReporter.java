@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+// TODO: IP filter: http://upd.emule-security.org/ipfilter.zip
 public class CassandraReporter implements Reporter {
 
     private CqlSession session;
