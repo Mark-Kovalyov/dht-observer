@@ -1,23 +1,20 @@
 package mayton.network.dhtobserver;
 
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
-import com.google.inject.Guice;
-import com.google.inject.Injector;
-import com.google.inject.Key;
-import com.google.inject.name.Names;
+import mayton.network.NetworkUtils;
 import mayton.network.dhtobserver.dht.AnnouncePeer;
 import mayton.network.dhtobserver.dht.FindNode;
 import mayton.network.dhtobserver.dht.GetPeers;
 import mayton.network.dhtobserver.dht.Ping;
 import mayton.network.dhtobserver.geo.GeoRecord;
 import mayton.network.dhtobserver.jfr.DhtParseEvent;
+import mayton.network.dhtobserver.security.IpFilterEmule;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.lang3.tuple.Triple;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.ThreadContext;
 
-import org.openjdk.jol.vm.VM;
 import org.slf4j.MDC;
 import the8472.bencode.BDecoder;
 import the8472.bencode.BEncoder;
@@ -37,7 +34,6 @@ import java.util.stream.Collectors;
 
 import static mayton.network.dhtobserver.Constants.DHT_EVEN_TYPE;
 import static mayton.network.dhtobserver.Utils.binhex;
-import static mayton.network.dhtobserver.Utils.fromInetAddress;
 
 public class UDPConsumer implements Runnable {
 
@@ -50,6 +46,8 @@ public class UDPConsumer implements Runnable {
     private AtomicInteger packetsReceived = new AtomicInteger(0);
 
     private Logger logger;
+
+    private IpFilter ipFilter;
 
     private BlockingQueue<Triple<byte[], InetAddress, Integer>> udpPackets;
 
@@ -76,16 +74,21 @@ public class UDPConsumer implements Runnable {
         chronicler = DhtObserverApplication.injector.getInstance(Chronicler.class);
         geoDb = DhtObserverApplication.injector.getInstance(GeoDb.class);
         reporter = DhtObserverApplication.injector.getInstance(Reporter.class);
+        ipFilter = DhtObserverApplication.injector.getInstance(IpFilterEmule.class);
         while(!Thread.currentThread().isInterrupted()) {
             try {
                 logger.trace("Consume...");
-                Triple<byte[], InetAddress, Integer> item = udpPackets.take();
-                byte[] buf = item.getLeft();
-                DatagramPacket packet = new DatagramPacket(buf, buf.length, item.getMiddle(), item.getRight());
                 DhtParseEvent dhtParseEvent = new DhtParseEvent();
                 dhtParseEvent.shortCode = shortCode;
                 dhtParseEvent.begin();
-                decodeCommand(packet);
+                Triple<byte[], InetAddress, Integer> item = udpPackets.take();
+                if (ipFilter.isAllowedIpv4(NetworkUtils.formatIpV4(item.getRight()))) {
+                    byte[] buf = item.getLeft();
+                    DatagramPacket packet = new DatagramPacket(buf, buf.length, item.getMiddle(), item.getRight());
+                    decodeCommand(packet);
+                } else {
+                    logger.warn("Prohibited IPv4 address {}", item.getRight());
+                }
                 dhtParseEvent.end();
                 dhtParseEvent.commit();
             } catch (InterruptedException e) {
@@ -115,7 +118,7 @@ public class UDPConsumer implements Runnable {
                     packet.getAddress(),
                     packet.getPort()
             );
-            Optional<GeoRecord> geoRecordOptional = geoDb.findFirst(fromInetAddress(packet.getAddress()));
+            Optional<GeoRecord> geoRecordOptional = geoDb.findFirst(NetworkUtils.fromIpv4toLong(packet.getAddress()));
             Optional<Ping> pingCommandOptional = tryToExtractPingCommand(res, packet, geoRecordOptional);
             if (pingCommandOptional.isPresent()) {
                 MDC.put(DHT_EVEN_TYPE, Ping.class.getName());

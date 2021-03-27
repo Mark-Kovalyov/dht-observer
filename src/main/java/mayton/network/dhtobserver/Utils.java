@@ -21,15 +21,6 @@ public class Utils {
 
     static Logger logger = LogManager.getLogger(Utils.class);
 
-    public static long fromInetAddress(InetAddress inetAddress) {
-        byte[] addr = inetAddress.getAddress();
-        if (inetAddress instanceof Inet4Address) {
-            return addr[0] * 256L * 256L * 256L + addr[1] * 256L * 256L + addr[2] * 256 + addr[3];
-        } else {
-            throw new RuntimeException("Unsupported non IPv4 address!");
-        }
-    }
-
     public static String wrapValue(Object value) {
         if (value instanceof byte[]) {
             StringJoiner stringJoiner = new StringJoiner(" ", "\"", "\"");

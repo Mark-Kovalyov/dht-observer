@@ -18,7 +18,7 @@
         <dependency>
             <groupId>mayton.libs</groupId>
             <artifactId>network</artifactId>
-            <version>1.1.1</version>
+            <version>1.2.0</version>
         </dependency>
 
         <dependency>
@@ -33,13 +33,7 @@
             <version>1.7</version>
         </dependency>
 
-        <dependency>
-            <groupId>org.openjdk.jol</groupId>
-            <artifactId>jol-core</artifactId>
-            <version>0.10</version>
-        </dependency>
-
-        <!-- DHT-torrent support libraries -->
+         <!-- DHT-torrent support libraries -->
 
         <dependency>
             <groupId>com.github.atomashpolskiy</groupId>

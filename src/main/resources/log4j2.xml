@@ -62,7 +62,7 @@
     <Loggers>
 
         <Root level="info">
-            <AppenderRef ref="Console" level="info"/>
+            <AppenderRef ref="Console" level="debug"/>
             <AppenderRef ref="MainFileAppender" level="info"/>
             <AppenderRef ref="Archive" level="info"/>
         </Root>

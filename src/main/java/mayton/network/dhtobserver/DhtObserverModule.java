@@ -7,6 +7,7 @@ import mayton.network.dhtobserver.db.cassandra.CassandraChronicler;
 import mayton.network.dhtobserver.db.cassandra.CassandraReporter;
 import mayton.network.dhtobserver.db.pg.PGChronicler;
 import mayton.network.dhtobserver.geo.GeoDbImpl;
+import mayton.network.dhtobserver.security.IpFilterEmule;
 
 public class DhtObserverModule extends AbstractModule {
 
@@ -36,6 +37,10 @@ public class DhtObserverModule extends AbstractModule {
 
         bind(ExecutorServiceProvider.class)
                 .to(ExecutorServiceProviderImpl.class)
+                .in(Scopes.SINGLETON);
+
+        bind(IpFilter.class)
+                .to(IpFilterEmule.class)
                 .in(Scopes.SINGLETON);
     }
 }

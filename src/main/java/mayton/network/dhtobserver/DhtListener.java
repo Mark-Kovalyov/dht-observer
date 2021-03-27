@@ -25,8 +25,6 @@ public class DhtListener implements Runnable, DhtListenerMBean {
 
     private Thread udpConsumerThread;
 
-
-
     public DhtListener(String threadName, int port, String shortCode) {
         this.port = port;
         this.threadName = threadName + "/" + port;
