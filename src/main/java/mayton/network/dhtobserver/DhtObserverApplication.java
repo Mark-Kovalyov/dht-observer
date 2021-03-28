@@ -5,9 +5,9 @@ import com.google.inject.Injector;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
+import java.util.stream.Collectors;
 
 import static java.lang.System.getProperty;
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -18,39 +18,15 @@ public class DhtObserverApplication {
 
     public static Injector injector = Guice.createInjector(DhtObserverModule.dhtObserverModule);
 
-    /*public DhtListener dhtListenerVuze16680() {
-        return new DhtListener("Vuze", 16680, "VZ1");
-    }
-    public DhtListener dhtListenerVuze49001() {
-        return new DhtListener("Vuze", 49001, "VZ2");
-    }
-    public DhtListener dhtListenerAmule4665() {
-        return new DhtListener("A-Mule", 4665, "AM1");
-    }
-    public DhtListener dhtListenerAmule4672() {
-        return new DhtListener("A-Mule", 4672, "AM2");
-    }
-    public DhtListener dhtListenerTorrent46434() {
-        return new DhtListener("Transm", 46434, "TR2");
-    }*/
-
-    public static DhtListener dhtListenerTransmission51413() {  return new DhtListener("Transm", 51413, "TR1");    }
-
-    public static DhtListener dhtListenerTransmission48529() {
-        return new DhtListener("Transm", 48529, "TR3");
-    }
-
-    public static List<DhtListener> dhtListenerList = new ArrayList<>() {{
-        add(dhtListenerTransmission51413());
-        /*add(dhtListenerTorrent46434());
-        add(dhtListenerAmule4672());
-        add(dhtListenerAmule4665());
-        add(dhtListenerVuze16680());
-        add(dhtListenerVuze49001());*/
-        add(dhtListenerTransmission48529());
-    }};
+    public static List<DhtListener> dhtListenerList;
 
     public DhtObserverApplication() {
+        ConfigProvider configProvider = injector.getInstance(ConfigProvider.class);
+
+        dhtListenerList = configProvider.threadConfig()
+                .stream()
+                .map(i -> new DhtListener(i.getLeft(), i.getMiddle(), i.getRight())).collect(Collectors.toList());
+
         dhtListenerList.forEach(thread -> injector.getInstance(ExecutorServiceProvider.class).executorService().execute(thread));
     }
 

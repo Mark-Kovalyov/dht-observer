@@ -1,8 +1,26 @@
-spring :
-  application :
-    name : DhtObserver
-  main :
-    web-application-type : NONE
+application :
+  listeners:
+    - threadName : "Vuze"
+      port : 16680
+      shortCode : "VZ1"
+    - threadName: "Vuze"
+      port: 49001
+      shortCode: "VZ2"
+    - threadName: "A-Mule"
+      port: 4665
+      shortCode: "AM1"
+    - threadName: "A-Mule"
+      port: 4672
+      shortCode: "AM2"
+    - threadName: "Transm"
+      port: 46434
+      shortCode: "TR2"
+    - threadName: "Transm"
+      port: 51413
+      shortCode: "TR1"
+    - threadName: "Transm"
+      port: 48529
+      shortCode: "TR3"
 
 geoDb:
   csvPath : "/storage/db/geo/maxmind/2010-10.MaxMind GeoIP City CSV Format/GeoIP-139_20101001/GeoIPCity.utf-8.csv"

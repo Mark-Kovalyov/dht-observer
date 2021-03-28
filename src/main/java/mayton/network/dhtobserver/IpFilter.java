@@ -1,7 +1,11 @@
 package mayton.network.dhtobserver;
 
+import mayton.network.dhtobserver.security.BannedIpRange;
+
+import java.util.Optional;
+
 public interface IpFilter {
 
-    boolean isAllowedIpv4(String ipv4);
+    Optional<BannedIpRange> inRange(String ipv4);
 
 }

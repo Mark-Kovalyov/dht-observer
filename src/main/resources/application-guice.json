@@ -1,0 +1,14 @@
+{
+  "listeners": [
+    {
+      "threadName": "Vuze1",
+      "port": 16680,
+      "shortCode": "VZ1"
+    },
+    {
+      "threadName": "Vuze1",
+      "port": 49001,
+      "shortCode": "VZ2"
+    }
+  ]
+}

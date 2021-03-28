@@ -1,0 +1,5 @@
+\begin{tabular}{r|rl}
+ \multicolumn{1}{c|}{\texttt{Benchmark}} & \multicolumn{2}{c}{\texttt{Score, ms/op}} \\
+\hline
+\texttt{GeoIpComponentBenchmark.test1} & \texttt{60.347} & \scriptsize $\pm$ \texttt{17.465}  \\
+\end{tabular}

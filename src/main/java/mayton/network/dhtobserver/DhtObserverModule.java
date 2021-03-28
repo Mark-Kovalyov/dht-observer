@@ -42,5 +42,7 @@ public class DhtObserverModule extends AbstractModule {
         bind(IpFilter.class)
                 .to(IpFilterEmule.class)
                 .in(Scopes.SINGLETON);
+
+        bind(ConfigProvider.class).to(YamlConfigProvider.class).in(Scopes.SINGLETON);
     }
 }

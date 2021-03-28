@@ -3,8 +3,6 @@ package mayton.network.dhtobserver.security;
 import com.google.inject.Inject;
 import mayton.network.NetworkUtils;
 import mayton.network.dhtobserver.IpFilter;
-import mayton.network.dhtobserver.geo.GeoDbImpl;
-import mayton.network.dhtobserver.geo.GeoRecord;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -13,6 +11,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 //000.000.000.000 - 000.255.255.255 , 000 , Bogon
@@ -26,21 +25,20 @@ public class IpFilterEmule implements IpFilter {
 
     private static Logger logger = LogManager.getLogger(IpFilterEmule.class);
 
-    private List<IpSecurityEntity> ipSecurityEntities = new ArrayList<>();
+    private List<BannedIpRange> ipSecurityEntities = new ArrayList<>();
 
     private String guardingPath = "/storage/db/amule/guarding.p2p";
 
     @Inject
     public void init() {
-        logger.info("init()");
+        logger.info("init() with instance id = {}", System.identityHashCode(this));
         try (Stream<String> stream = Files.lines(Paths.get(guardingPath))) {
             stream.forEach(item -> {
-                IpSecurityEntity ipSecurityEntity = new IpSecurityEntity(
+                BannedIpRange bannedIpRange = new BannedIpRange(
                         NetworkUtils.parseIpV4(item.substring(0,15)),
                         NetworkUtils.parseIpV4(item.substring(18,18 + 15)),
                         item.substring(43));
-                logger.debug("entity = {}", ipSecurityEntity.toString());
-                ipSecurityEntities.add(ipSecurityEntity);
+                ipSecurityEntities.add(bannedIpRange);
             });
             logger.info("init done with {} enitities", ipSecurityEntities.size());
         } catch (IOException e) {
@@ -49,13 +47,15 @@ public class IpFilterEmule implements IpFilter {
     }
 
     @Override
-    public boolean isAllowedIpv4(String ipv4) {
+    public Optional<BannedIpRange> inRange(String ipv4) {
         long ip = NetworkUtils.parseIpV4(ipv4);
-        for(IpSecurityEntity ipSecurityEntity : ipSecurityEntities) {
-            if (ip >= ipSecurityEntity.beginIp && ip <= ipSecurityEntity.endIp) {
-                return true;
+        int cnt = 0;
+        for(BannedIpRange bannedIpRange : ipSecurityEntities) {
+            if (ip >= bannedIpRange.beginIp && ip <= bannedIpRange.endIp) {
+                return Optional.of(bannedIpRange);
             }
+            cnt++;
         }
-        return false;
+        return Optional.empty();
     }
 }

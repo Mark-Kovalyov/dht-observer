@@ -11,38 +11,37 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 public class GeoDbImpl implements GeoDb {
 
     private static Logger logger = LogManager.getLogger(GeoDbImpl.class);
 
-    private List<GeoRecord> geoRecords = new ArrayList<>();
+    private List<GeoRecord> geoRecords;
 
     private String csvPath = "/bigdata/GeoIPCity.utf-8.csv";
 
     @Inject
     public void init() {
-        logger.info("init from {}" , csvPath);
+        logger.info("init from {} with objectId = {}" , csvPath, System.identityHashCode(this));
+        List<GeoRecord> geoRecordsTemp = new ArrayList<>();
         try(CSVParser csvParser = new CSVParser(new FileReader(csvPath), CSVFormat.DEFAULT.withSkipHeaderRecord(true))) {
             Iterator<CSVRecord> i = csvParser.iterator();
             int cnt = 0;
             i.next();
-            /*while(i.hasNext()) {
+            while(i.hasNext()) {
                 CSVRecord record = i.next();
                 String country = record.get(2);
                 String city = record.get(4);
                 long begin = NetworkUtils.parseIpV4(record.get(0));
                 long end = NetworkUtils.parseIpV4(record.get(1));
-                geoRecords.add(new GeoRecord(country, city, begin, end));
+                geoRecordsTemp.add(new GeoRecord(country, city, begin, end));
                 cnt++;
-            }*/
+            }
             logger.info("init CSV records loaded. Sorting..");
-            geoRecords.sort(GeoRecord.beginIpComparator);
+            geoRecordsTemp.sort(GeoRecord.beginIpComparator);
             logger.info("init done, {} records loaded and sorted", cnt);
+            geoRecords = Collections.unmodifiableList(geoRecordsTemp);
         } catch (NumberFormatException | IOException ex) {
             logger.error(ex);
         }

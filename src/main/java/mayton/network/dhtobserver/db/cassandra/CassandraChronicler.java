@@ -24,8 +24,8 @@ public class CassandraChronicler implements Chronicler {
 
     private String keyspace = "dhtspace";
 
-    private int NODE_HOST_TTL = 24 * 60 * 60; // 1 days to keep host info
-    private int INFO_HASH_TTL = 1 * 60 * 60;  // 1 hour to keep tokens
+    private int NODE_HOST_TTL = 7 * 24 * 60 * 60;   // 7 days to keep host info
+    private int INFO_HASH_TTL = 1 * 60 * 60;        // 1 hour to keep tokens
     private int ANNOUNCE_TTL  = 30 * 24 * 60 * 60;  // 30 days
 
     @Inject

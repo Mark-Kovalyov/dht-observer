@@ -8,6 +8,7 @@ import mayton.network.dhtobserver.dht.GetPeers;
 import mayton.network.dhtobserver.dht.Ping;
 import mayton.network.dhtobserver.geo.GeoRecord;
 import mayton.network.dhtobserver.jfr.DhtParseEvent;
+import mayton.network.dhtobserver.security.BannedIpRange;
 import mayton.network.dhtobserver.security.IpFilterEmule;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.lang3.tuple.Triple;
@@ -22,6 +23,7 @@ import the8472.bencode.BEncoder;
 import java.io.*;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
+import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
@@ -74,7 +76,7 @@ public class UDPConsumer implements Runnable {
         chronicler = DhtObserverApplication.injector.getInstance(Chronicler.class);
         geoDb = DhtObserverApplication.injector.getInstance(GeoDb.class);
         reporter = DhtObserverApplication.injector.getInstance(Reporter.class);
-        ipFilter = DhtObserverApplication.injector.getInstance(IpFilterEmule.class);
+        ipFilter = DhtObserverApplication.injector.getInstance(IpFilter.class);
         while(!Thread.currentThread().isInterrupted()) {
             try {
                 logger.trace("Consume...");
@@ -82,12 +84,23 @@ public class UDPConsumer implements Runnable {
                 dhtParseEvent.shortCode = shortCode;
                 dhtParseEvent.begin();
                 Triple<byte[], InetAddress, Integer> item = udpPackets.take();
-                if (ipFilter.isAllowedIpv4(NetworkUtils.formatIpV4(item.getRight()))) {
-                    byte[] buf = item.getLeft();
-                    DatagramPacket packet = new DatagramPacket(buf, buf.length, item.getMiddle(), item.getRight());
-                    decodeCommand(packet);
+                InetAddress ip = item.getMiddle();
+                logger.trace("Generic UDP IP : {}", ip.toString());
+                if (ip instanceof Inet4Address) {
+                    logger.trace("IPv4. Analyzing...");
+                    String ipString = NetworkUtils.formatIpV4((Inet4Address) ip);
+                    logger.trace("After format IPv4 string : {}", ipString);
+                    Optional<BannedIpRange> bannedIpRange = ipFilter.inRange(ipString);
+                    if (bannedIpRange.isEmpty()) {
+                        logger.trace("Allowed!");
+                        byte[] buf = item.getLeft();
+                        DatagramPacket packet = new DatagramPacket(buf, buf.length, ip, item.getRight());
+                        decodeCommand(packet);
+                    } else {
+                        logger.warn("Banned ipv4 {} detected in {}", ip, bannedIpRange.get());
+                    }
                 } else {
-                    logger.warn("Prohibited IPv4 address {}", item.getRight());
+                    logger.warn("IP address {} is non IPv4. Ignored", ip);
                 }
                 dhtParseEvent.end();
                 dhtParseEvent.commit();

@@ -2,9 +2,9 @@
 
 mvn clean package -DskipTests
 mvn install dependency:copy-dependencies
-cp -f target/dht-observer-0.0.1-SNAPSHOT.jar ./bin
+cp -f target/dht-observer.jar ./bin
 rsync -avh target/dependency/* ./bin --delete
 
-cd bin
+cd ./bin
 
-java -jar dht-observer-0.0.1-SNAPSHOT.jar -Xjsr305=strict
+java -jar dht-observer.jar
