@@ -36,6 +36,7 @@ import java.util.stream.Collectors;
 
 import static mayton.network.dhtobserver.Constants.DHT_EVEN_TYPE;
 import static mayton.network.dhtobserver.Utils.binhex;
+import static mayton.network.dhtobserver.Utils.generateRandomToken;
 
 public class UDPConsumer implements Runnable {
 
@@ -111,11 +112,7 @@ public class UDPConsumer implements Runnable {
         }
     }
 
-    String generateRandomToken() {
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < 8; i++) sb.append('a' + random.nextInt('z' - 'a'));
-        return sb.toString();
-    }
+
 
     @SuppressWarnings("java:S2629")
     void decodeCommand(DatagramPacket packet) {
@@ -248,8 +245,9 @@ public class UDPConsumer implements Runnable {
             Map<String, Object> a = (Map<String, Object>) res.get("a");
             return Optional.of(new Ping(
                     Hex.encodeHexString((byte[]) a.get("id")),
-                    packet.getAddress().getHostAddress() + ":" + packet.getPort(),
-                    optionalGeoRecord, packet.getAddress(), packet.getPort()));
+                    packet.getAddress(),
+                    packet.getPort(),
+                    optionalGeoRecord));
         } else {
             return Optional.empty();
         }
@@ -270,9 +268,11 @@ public class UDPConsumer implements Runnable {
             Map<String, Object> a = (Map<String, Object>) res.get("a");
             String id = Hex.encodeHexString(((byte[]) a.get("id")));
             String target = Hex.encodeHexString(((byte[]) a.get("target")));
-            return Optional.of(new FindNode(id, target,
-                    packet.getAddress().getHostAddress() + ":" + packet.getPort(),
-                    geoRecord, packet.getAddress(), packet.getPort()));
+            return Optional.of(new FindNode(
+                    id, target,
+                    geoRecord,
+                    packet.getAddress(),
+                    packet.getPort()));
         } else {
             return Optional.empty();
         }

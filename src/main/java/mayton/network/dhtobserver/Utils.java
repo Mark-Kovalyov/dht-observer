@@ -21,6 +21,8 @@ public class Utils {
 
     static Logger logger = LogManager.getLogger(Utils.class);
 
+    static Random random = new Random();
+
     public static String wrapValue(Object value) {
         if (value instanceof byte[]) {
             StringJoiner stringJoiner = new StringJoiner(" ", "\"", "\"");
@@ -29,6 +31,12 @@ public class Utils {
         } else {
             return value.toString();
         }
+    }
+
+    public static String generateRandomToken() {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < 8; i++) sb.append('a' + random.nextInt('z' - 'a'));
+        return sb.toString();
     }
 
     @NotNull

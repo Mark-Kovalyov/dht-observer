@@ -12,14 +12,12 @@ public class FindNode extends DhtEvent {
 
     private final String id;
     private final String target;
-    private final String hostAndPort;
     private final Optional<GeoRecord> geoRecord;
 
-    public FindNode(String id, String target, String hostAndPort, Optional<GeoRecord> geoRecord, InetAddress inetAddress, int port) {
+    public FindNode(String id, String target, Optional<GeoRecord> geoRecord, InetAddress inetAddress, int port) {
         super(geoRecord, inetAddress, port);
         this.id = id;
         this.target = target;
-        this.hostAndPort = hostAndPort;
         this.geoRecord = geoRecord;
     }
 
@@ -36,12 +34,7 @@ public class FindNode extends DhtEvent {
         return "FindNode{" +
                 "id='" + id + '\'' +
                 ", target='" + target + '\'' +
-                ", hostAndPort='" + hostAndPort + '\'' +
                 '}';
-    }
-
-    public String getHostAndPort() {
-        return hostAndPort;
     }
 
     public Optional<GeoRecord> getGeoRecord() {

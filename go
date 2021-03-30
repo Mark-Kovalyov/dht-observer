@@ -5,6 +5,12 @@ mvn install dependency:copy-dependencies
 cp -f target/dht-observer.jar ./bin
 rsync -avh target/dependency/* ./bin --delete
 
+#mvn clean package -DskipTests -targetbinary=dht-get-peers
+#cp -f target/dht-get-peers.jar ./bin
+
 cd ./bin
 
-java -jar dht-observer.jar
+java \
+ -XX:+UnlockExperimentalVMOptions \
+ -XX:+UseShenandoahGC \
+ -jar dht-observer.jar

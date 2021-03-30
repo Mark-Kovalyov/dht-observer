@@ -23,7 +23,7 @@ public class GeoIpComponentBenchmark {
     @Benchmark
     @Warmup(iterations = 1, time = 10, timeUnit = TimeUnit.SECONDS)
     @Measurement(iterations = 2, batchSize = 2)
-    public void test1() {
+    public void testFindFirst() {
         geoDb.findFirst(r.nextInt(Integer.MAX_VALUE));
     }
 

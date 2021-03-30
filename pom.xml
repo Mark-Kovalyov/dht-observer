@@ -30,6 +30,20 @@
         </profile>
 
         <profile>
+            <id>dht-get-peers</id>
+            <activation>
+                <property>
+                    <name>targetbinary</name>
+                    <value>dht-get-peers</value>
+                </property>
+            </activation>
+            <properties>
+                <main.class.name>mayton.network.dhtobserver.DhtGetPeers</main.class.name>
+                <jar.name>dht-get-peers</jar.name>
+            </properties>
+        </profile>
+
+        <profile>
             <id>benchmark</id>
             <activation>
                 <property>
@@ -157,6 +171,13 @@
             <scope>test</scope>
         </dependency>
 
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-params</artifactId>
+            <version>5.7.0</version>
+            <scope>test</scope>
+        </dependency>
+
         <!-- Guice -->
 
         <dependency>
@@ -196,7 +217,7 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>2.22.2</version>
                 <configuration>
-                    <groups>cassandra | bencode</groups>
+                    <excludedGroups>slow</excludedGroups>
                 </configuration>
             </plugin>
             <plugin>

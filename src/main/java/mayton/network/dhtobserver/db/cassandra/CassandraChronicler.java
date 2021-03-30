@@ -52,18 +52,21 @@ public class CassandraChronicler implements Chronicler {
                         "UPDATE nodes_hosts USING TTL " + NODE_HOST_TTL + " SET " +
                                 " last_ip_port = ?, " +
                                 " last_country = ?, " +
-                                " last_city = ? WHERE node_id = ?",
-                        command.getLastHostAndPort(),
+                                " last_city = ?, " +
+                                " last_update_time = toTimeStamp(now()) " +
+                                " WHERE node_id = ?",
+                        command.getHostAndPort(),
                         command.getGeoRecord().get().country,
                         command.getGeoRecord().get().city,
                         command.getId());
             } else {
+                logger.warn("Hmm... unable to recognize GeoIp binding for ip = {}", command.getHostAndPort());
                 sessionAction(
                         "UPDATE nodes_hosts USING TTL " + NODE_HOST_TTL + " SET " +
                                 " last_ip_port = ?, " +
                                 " last_update_time = toTimeStamp(now()) " +
                                 "WHERE node_id = ?",
-                        command.getLastHostAndPort(),
+                        command.getHostAndPort(),
                         command.getId());
             }
 
@@ -91,7 +94,7 @@ public class CassandraChronicler implements Chronicler {
                         command.getGeoRecord().get().city,
                         command.getId());
             } else {
-                logger.debug("onFindNode");
+                logger.warn("Hmm... unable to recognize GeoIp binding for ip = {}", command.getHostAndPort());
                 sessionAction(
                         "UPDATE nodes_hosts USING TTL " + NODE_HOST_TTL + " SET " +
                                 " last_ip_port = ?, " +
@@ -111,6 +114,28 @@ public class CassandraChronicler implements Chronicler {
         try {
             sessionAction("UPDATE info_hash USING TTL " + INFO_HASH_TTL + " SET info_hash = ? WHERE node_id = ?", command.getInfoHash(), command.getId());
             sessionAction("UPDATE nodes_stats SET get_peeers_requests = get_peeers_requests + 1 WHERE node_id = ?", command.getId());
+            if (command.getGeoRecord().isPresent()) {
+                sessionAction(
+                        "UPDATE nodes_hosts USING TTL " + NODE_HOST_TTL + " SET " +
+                                " last_ip_port = ?, " +
+                                " last_update_time = toTimeStamp(now()), " +
+                                " last_country = ?, " +
+                                " last_city    = ? " +
+                                " WHERE node_id = ?",
+                        command.getHostAndPort(),
+                        command.getGeoRecord().get().country,
+                        command.getGeoRecord().get().city,
+                        command.getId());
+            } else {
+                logger.warn("Hmm... unable to recognize GeoIp binding for ip = {}", command.getHostAndPort());
+                sessionAction(
+                        "UPDATE nodes_hosts USING TTL " + NODE_HOST_TTL + " SET " +
+                                " last_ip_port = ?, " +
+                                " last_update_time = toTimeStamp(now()) " +
+                                " WHERE node_id = ?",
+                        command.getHostAndPort(),
+                        command.getId());
+            }
         } catch (Exception ex) {
             logger.error("!", ex);
         }
