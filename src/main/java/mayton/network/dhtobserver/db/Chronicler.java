@@ -1,4 +1,4 @@
-package mayton.network.dhtobserver;
+package mayton.network.dhtobserver.db;
 
 import mayton.network.dhtobserver.dht.*;
 

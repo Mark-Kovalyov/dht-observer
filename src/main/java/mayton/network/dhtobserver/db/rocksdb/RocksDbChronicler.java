@@ -1,6 +1,6 @@
 package mayton.network.dhtobserver.db.rocksdb;
 
-import mayton.network.dhtobserver.Chronicler;
+import mayton.network.dhtobserver.db.Chronicler;
 import mayton.network.dhtobserver.dht.AnnouncePeer;
 import mayton.network.dhtobserver.dht.FindNode;
 import mayton.network.dhtobserver.dht.GetPeers;

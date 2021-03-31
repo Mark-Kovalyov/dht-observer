@@ -2,6 +2,9 @@ package mayton.network.dhtobserver;
 
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
 import mayton.network.NetworkUtils;
+import mayton.network.dhtobserver.db.Chronicler;
+import mayton.network.dhtobserver.db.IpFilter;
+import mayton.network.dhtobserver.db.Reporter;
 import mayton.network.dhtobserver.dht.AnnouncePeer;
 import mayton.network.dhtobserver.dht.FindNode;
 import mayton.network.dhtobserver.dht.GetPeers;
@@ -9,7 +12,6 @@ import mayton.network.dhtobserver.dht.Ping;
 import mayton.network.dhtobserver.geo.GeoRecord;
 import mayton.network.dhtobserver.jfr.DhtParseEvent;
 import mayton.network.dhtobserver.security.BannedIpRange;
-import mayton.network.dhtobserver.security.IpFilterEmule;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.lang3.tuple.Triple;
 import org.apache.logging.log4j.LogManager;
@@ -91,7 +93,7 @@ public class UDPConsumer implements Runnable {
                     logger.trace("IPv4. Analyzing...");
                     String ipString = NetworkUtils.formatIpV4((Inet4Address) ip);
                     logger.trace("After format IPv4 string : {}", ipString);
-                    Optional<BannedIpRange> bannedIpRange = ipFilter.inRange(ipString);
+                    Optional<BannedIpRange> bannedIpRange = ipFilter.inRange(NetworkUtils.parseIpV4(ipString));
                     if (bannedIpRange.isEmpty()) {
                         logger.trace("Allowed!");
                         byte[] buf = item.getLeft();
@@ -129,6 +131,9 @@ public class UDPConsumer implements Runnable {
                     packet.getPort()
             );
             Optional<GeoRecord> geoRecordOptional = geoDb.findFirst(NetworkUtils.fromIpv4toLong(packet.getAddress()));
+            if (geoRecordOptional.isEmpty()) {
+                logger.warn("Hmm... unable to recognize GeoIp binding for ip = {}, long = {}", packet.getAddress(), NetworkUtils.fromIpv4toLong(packet.getAddress()));
+            }
             Optional<Ping> pingCommandOptional = tryToExtractPingCommand(res, packet, geoRecordOptional);
             if (pingCommandOptional.isPresent()) {
                 MDC.put(DHT_EVEN_TYPE, Ping.class.getName());

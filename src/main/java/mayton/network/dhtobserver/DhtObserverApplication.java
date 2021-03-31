@@ -2,6 +2,8 @@ package mayton.network.dhtobserver;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import mayton.network.dhtobserver.db.Chronicler;
+import mayton.network.dhtobserver.db.Reporter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 

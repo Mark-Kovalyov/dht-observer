@@ -1,16 +1,13 @@
 package mayton.network.dhtobserver.db.cassandra;
 
 import com.datastax.oss.driver.api.core.CqlSession;
-import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.google.inject.Inject;
-import mayton.network.dhtobserver.Reporter;
+import mayton.network.dhtobserver.db.Reporter;
 import org.jetbrains.annotations.NotNull;
 
-import java.net.InetAddress;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 // TODO: IP filter: http://upd.emule-security.org/ipfilter.zip

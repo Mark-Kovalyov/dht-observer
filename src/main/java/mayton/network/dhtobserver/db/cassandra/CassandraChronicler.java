@@ -5,7 +5,7 @@ import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 
 import com.google.inject.Inject;
-import mayton.network.dhtobserver.Chronicler;
+import mayton.network.dhtobserver.db.Chronicler;
 import mayton.network.dhtobserver.dht.AnnouncePeer;
 import mayton.network.dhtobserver.dht.FindNode;
 import mayton.network.dhtobserver.dht.GetPeers;
@@ -60,7 +60,6 @@ public class CassandraChronicler implements Chronicler {
                         command.getGeoRecord().get().city,
                         command.getId());
             } else {
-                logger.warn("Hmm... unable to recognize GeoIp binding for ip = {}", command.getHostAndPort());
                 sessionAction(
                         "UPDATE nodes_hosts USING TTL " + NODE_HOST_TTL + " SET " +
                                 " last_ip_port = ?, " +
@@ -94,7 +93,6 @@ public class CassandraChronicler implements Chronicler {
                         command.getGeoRecord().get().city,
                         command.getId());
             } else {
-                logger.warn("Hmm... unable to recognize GeoIp binding for ip = {}", command.getHostAndPort());
                 sessionAction(
                         "UPDATE nodes_hosts USING TTL " + NODE_HOST_TTL + " SET " +
                                 " last_ip_port = ?, " +
@@ -127,7 +125,6 @@ public class CassandraChronicler implements Chronicler {
                         command.getGeoRecord().get().city,
                         command.getId());
             } else {
-                logger.warn("Hmm... unable to recognize GeoIp binding for ip = {}", command.getHostAndPort());
                 sessionAction(
                         "UPDATE nodes_hosts USING TTL " + NODE_HOST_TTL + " SET " +
                                 " last_ip_port = ?, " +

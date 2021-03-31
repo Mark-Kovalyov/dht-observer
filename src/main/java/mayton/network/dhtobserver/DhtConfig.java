@@ -1,7 +1,9 @@
 package mayton.network.dhtobserver;
 
+import javax.annotation.Nonnull;
+
 public interface DhtConfig {
 
-    String getParameter(String key);
+    String getParameter(@Nonnull String key);
 
 }
