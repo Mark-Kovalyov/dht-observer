@@ -16,9 +16,11 @@ public class DhtListener implements Runnable, DhtListenerMBean {
 
     private Logger logger;
 
+    // TODO: Consider Disruptor as replacement for BQ
     private BlockingQueue<Triple<byte[], InetAddress, Integer>> udpPackets;
 
     private int port;
+
     private String threadName;
 
     private String shortCode; // Thiss is need for logging
@@ -51,11 +53,11 @@ public class DhtListener implements Runnable, DhtListenerMBean {
                 logger.trace("receive udp packet : {}", packet.getAddress().toString());
                 udpPackets.put(Triple.of(Arrays.copyOf(buf, buf.length), address, port));
             }
-            udpConsumerThread.interrupt();
             logger.info("Interrupted!");
         } catch (IOException | InterruptedException e) {
             logger.error(e);
         } finally {
+            udpConsumerThread.interrupt();
             ThreadContext.clearAll();
         }
     }

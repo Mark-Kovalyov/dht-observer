@@ -8,12 +8,3 @@ rsync -avh target/dependency/* ./bin --delete
 
 mvn clean package -DskipTests -Dtargetbinary=dhtgetpeers
 cp -f target/dht-get-peers.jar ./bin
-
-cd ./bin
-
-java \
- -XX:+HeapDumpOnOutOfMemoryError \
- -XX:HeapDumpPath="dht-observer.hprof" \
- -XX:+UnlockExperimentalVMOptions \
- -XX:+UseShenandoahGC \
- -jar dht-observer.jar

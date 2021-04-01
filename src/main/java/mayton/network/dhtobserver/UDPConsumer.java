@@ -114,8 +114,6 @@ public class UDPConsumer implements Runnable {
         }
     }
 
-
-
     @SuppressWarnings("java:S2629")
     void decodeCommand(DatagramPacket packet) {
         LocalDateTime localDateTime = LocalDateTime.now();

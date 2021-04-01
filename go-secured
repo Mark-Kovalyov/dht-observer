@@ -1,0 +1,11 @@
+#!/bin/bash -ev
+
+cp -f dht-observer.properties ./bin/
+
+cd ./bin
+
+java \
+ -Djava.security.manager \
+ -Djava.security.policy=dht-observer.properties \
+ -Djava.security.debug=access \
+ -jar dht-observer.jar

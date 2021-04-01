@@ -7,6 +7,8 @@ import mayton.network.dhtobserver.db.Reporter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.lang.management.GarbageCollectorMXBean;
+import java.lang.management.ManagementFactory;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
@@ -36,13 +38,20 @@ public class DhtObserverApplication {
 
         System.setProperty("log4j.configurationFile","log4j2.xml");
         System.out.printf("LogManager.context = %s\n", LogManager.getContext(true));
-
+        System.out.printf("User dir = %s\n", System.getProperty("user.dir"));
+        System.out.printf("Java version = %s\n", System.getProperty("java.version"));
+        System.out.printf("Java VM name = %s\n", System.getProperty("java.vm.name"));
+        List<GarbageCollectorMXBean> gcMxBeans = ManagementFactory.getGarbageCollectorMXBeans();
+        System.out.printf("GC info:\n");
+        for (GarbageCollectorMXBean gcMxBean : gcMxBeans) {
+            System.out.printf(" - GC bean name : %s, objectName %s\n", gcMxBean.getName(),gcMxBean.getObjectName());
+        }
         Thread shutdownHook = new Thread(() -> {
             logger.warn("Shutdown hook called!");
             ExecutorService executorService = injector.getInstance(ExecutorServiceProvider.class).executorService();
             executorService.shutdown();
             logger.warn(":: signalling stop for all threads");
-            dhtListenerList.forEach(item -> item.askStop());
+            dhtListenerList.forEach(DhtListener::askStop);
             logger.warn(":: waiting for cachedthreadpool shutdown");
             try {
                 logger.warn(":: waiting 7 s a while for existing tasks to terminate");
