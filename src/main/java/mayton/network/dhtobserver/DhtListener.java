@@ -1,5 +1,6 @@
 package mayton.network.dhtobserver;
 
+import com.github.rholder.retry.*;
 import org.apache.commons.lang3.tuple.Triple;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -8,9 +9,9 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.sql.Time;
 import java.util.Arrays;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.*;
 
 public class DhtListener implements Runnable, DhtListenerMBean {
 
@@ -39,14 +40,44 @@ public class DhtListener implements Runnable, DhtListenerMBean {
         udpConsumerThread.start();
     }
 
+
+    class DatagramSocketCallable implements Callable<DatagramSocket> {
+
+        private int port;
+
+        public DatagramSocketCallable(int port) {
+            this.port = port;
+        }
+
+        public DatagramSocket call() throws Exception {
+            DatagramSocket socket = new DatagramSocket(port);
+            socket.setReuseAddress(true);
+            return socket;
+        }
+    }
+
     @Override
     public void run() {
         ThreadContext.put("shortCode", shortCode);
-        logger.info("Started {} listener, threadId = {}", threadName, Thread.currentThread().getId());
-        try(DatagramSocket socket = new DatagramSocket(port)) {
-            socket.setReuseAddress(true);
-            byte[] buf = new byte[320]; // WTF?
+        DatagramSocketCallable datagramSocketCallable = new DatagramSocketCallable(port);
+
+        Retryer<DatagramSocket> retryer = RetryerBuilder.<DatagramSocket>newBuilder()
+                .retryIfExceptionOfType(IOException.class)
+                .withWaitStrategy(WaitStrategies.fixedWait(3, TimeUnit.SECONDS))
+                .withStopStrategy(StopStrategies.stopAfterAttempt(20))
+                .withRetryListener(new RetryListener() {
+                    @Override
+                    public <V> void onRetry(Attempt<V> attempt) {
+                        logger.warn("Attempt number {}, cause {}", attempt.getAttemptNumber(), attempt.getExceptionCause().getMessage());
+                    }
+                })
+                .build();
+
+        try {
+            DatagramSocket socket = retryer.call(datagramSocketCallable);
+            logger.info("Started {} listener, threadId = {}", threadName, Thread.currentThread().getId());
             while (!Thread.currentThread().isInterrupted()) {
+                byte[] buf = new byte[320]; // WTF?
                 DatagramPacket packet = new DatagramPacket(buf, buf.length);
                 socket.receive(packet);
                 InetAddress address = packet.getAddress();
@@ -54,8 +85,10 @@ public class DhtListener implements Runnable, DhtListenerMBean {
                 udpPackets.put(Triple.of(Arrays.copyOf(buf, buf.length), address, port));
             }
             logger.info("Interrupted!");
-        } catch (IOException | InterruptedException e) {
-            logger.error(e);
+        } catch (RetryException | ExecutionException | IOException e) {
+            logger.error("!", e);
+        } catch (InterruptedException e) {
+            logger.warn("Interrupted", e);
         } finally {
             udpConsumerThread.interrupt();
             ThreadContext.clearAll();
