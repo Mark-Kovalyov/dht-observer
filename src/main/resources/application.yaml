@@ -1,17 +1,22 @@
 application :
   listeners:
-    - threadName : "Vuze"
+    - threadName : "Vuze-1"
       port : 16680
       shortCode : "VZ1"
-    - threadName: "Vuze"
+    - threadName: "Vuze-2"
       port: 49001
       shortCode: "VZ2"
+    - threadName: "Vuze-3"
+      port : 43567
+      shortCode: "VZ3"
+
     - threadName: "A-Mule"
       port: 4665
       shortCode: "AM1"
     - threadName: "A-Mule"
       port: 4672
       shortCode: "AM2"
+
     - threadName: "Transm"
       port: 46434
       shortCode: "TR2"

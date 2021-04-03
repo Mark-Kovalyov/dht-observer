@@ -175,13 +175,27 @@ public class UDPConsumer implements Runnable {
                             sendMap.put("values", reporter.knownPeers().stream().limit(10).collect(Collectors.toList()));
                             
                         try (DatagramSocket socket = new DatagramSocket()) {
+                            logger.debug("Pong prepare...");
                             BEncoder encoder = new BEncoder();
+                            // TODO:Fix
+                            // [WARN ] 22  : dhtlisteners.TR1 !
+                            // java.lang.RuntimeException: unknown object to encode null
+                            //	at the8472.bencode.BEncoder.encodeInternal(BEncoder.java:116) ~[bt-dht-1.9.jar:1.9]
+                            //	at the8472.bencode.BEncoder.lambda$encodeMap$0(BEncoder.java:147) ~[bt-dht-1.9.jar:1.9]
+                            //	at java.util.TreeMap$EntrySpliterator.forEachRemaining(TreeMap.java:2962) ~[?:?]
+                            //	at java.util.stream.ReferencePipeline$Head.forEachOrdered(ReferencePipeline.java:668) ~[?:?]
+                            //	at the8472.bencode.BEncoder.encodeMap(BEncoder.java:145) ~[bt-dht-1.9.jar:1.9]
+                            //	at the8472.bencode.BEncoder.encode(BEncoder.java:37) ~[bt-dht-1.9.jar:1.9]
+                            //	at mayton.network.dhtobserver.UDPConsumer.decodeCommand(UDPConsumer.java:180) [dht-observer.jar:?]
+                            //	at mayton.network.dhtobserver.UDPConsumer.run(UDPConsumer.java:101) [dht-observer.jar:?]
+                            //	at java.lang.Thread.run(Thread.java:834) [?:?]
                             ByteBuffer sendBuffer = encoder.encode(sendMap, 320);
                             byte[] sendBytes = sendBuffer.array();
                             // TODO: Finish
-                            //socket.send(new DatagramPacket(sendBytes, sendBytes.length, packet.getAddress(), packet.getPort()));
+                            socket.send(new DatagramPacket(sendBytes, sendBytes.length, packet.getAddress(), packet.getPort()));
+                            logger.debug("Pong : {}", Utils.dumpBencodedMapWithJackson(sendMap, new DefaultPrettyPrinter()));
                         }
-                        logger.debug("Pong : {}", Utils.dumpBencodedMapWithJackson(sendMap, new DefaultPrettyPrinter()));
+
                     } else {
                         Optional<AnnouncePeer> optionalAnnouncePeer = extractAnnounce(res, packet, geoRecordOptional);
                         if (optionalAnnouncePeer.isPresent()) {
@@ -233,24 +247,22 @@ public class UDPConsumer implements Runnable {
     //  "v" : "4c540101",
     //  "y" : "71 ( 'q' )"
     // }
-
-    // {
-    //  "a" : {
-    //    "id" : "16b4dd510541214124bc6c953d162a8206b28d8a"
-    //  },
-    //  "q" : "70696e67 ( 'ping' )",
-    //  "t" : "0e6bf8e3",
-    //  "v" : "55547021 ( 'UTp!' )",
-    //  "y" : "71 ( 'q' )"
-    //}
     private Optional<Ping> tryToExtractPingCommand(Map<String, Object> res, DatagramPacket packet, Optional<GeoRecord> optionalGeoRecord) {
-        if (res.containsKey("q") && (new String((byte[]) res.get("q")).equals("get_peers"))) {
-            Map<String, Object> a = (Map<String, Object>) res.get("a");
-            return Optional.of(new Ping(
-                    Hex.encodeHexString((byte[]) a.get("id")),
-                    packet.getAddress(),
-                    packet.getPort(),
-                    optionalGeoRecord));
+        if (res.containsKey("q") && (new String((byte[]) res.get("q")).equals("ping"))) {
+            if (res.containsKey("a")) {
+                Map<String, Object> a = (Map<String, Object>) res.get("a");
+                if (a.containsKey("id")) {
+                    return Optional.of(new Ping(
+                            Hex.encodeHexString((byte[]) a.get("id")),
+                            packet.getAddress(),
+                            packet.getPort(),
+                            optionalGeoRecord));
+                } else {
+                    return Optional.empty();
+                }
+            } else {
+                return Optional.empty();
+            }
         } else {
             return Optional.empty();
         }

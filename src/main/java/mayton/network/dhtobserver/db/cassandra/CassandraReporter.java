@@ -4,14 +4,18 @@ import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.google.inject.Inject;
+import mayton.network.dhtobserver.DhtObserverApplication;
 import mayton.network.dhtobserver.db.Reporter;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
-// TODO: IP filter: http://upd.emule-security.org/ipfilter.zip
 public class CassandraReporter implements Reporter {
+
+    static Logger logger = LogManager.getLogger(DhtObserverApplication.class);
 
     private CqlSession session;
 
@@ -25,11 +29,14 @@ public class CassandraReporter implements Reporter {
     @NotNull
     @Override
     public List<String> knownPeers() {
-        ResultSet res = session.execute("select last_update_time,host from known_peers where seq=1 order by last_update_time desc");
+        ResultSet res = session.execute("select last_update_time,host from known_peers where seq=1 order by last_update_time desc limit 10");
         List<String> peers = new ArrayList<>();
         for(Row row : res) {
-            peers.add(row.getString("host"));
+            String host = row.getString("host");
+            logger.debug("host = {}", host);
+            peers.add(host);
         }
+        logger.debug("overall : {} items", peers.size());
         return peers;
     }
 

@@ -16,6 +16,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import javax.annotation.Nonnull;
 
+import static mayton.network.NetworkUtils.formatIpV4;
+import static mayton.network.NetworkUtils.fromIpv4toLong;
+
 public class CassandraChronicler implements Chronicler {
 
     private static Logger logger = LoggerFactory.getLogger(CassandraChronicler.class);
@@ -46,6 +49,14 @@ public class CassandraChronicler implements Chronicler {
     public void onPing(@Nonnull Ping command) {
         logger.debug("onPing with command = {}", command.toString());
         try {
+            // CREATE TABLE dhtspace.known_peers (
+            //    seq int,
+            //    last_update_time timestamp,
+            //    host text,
+            //    PRIMARY KEY (seq, last_update_time)
+            //);
+            sessionAction("UPDATE known_peers last_update_time = toTimeStamp(now()) WHERE host = ? AND seq = 1", formatIpV4(fromIpv4toLong(command.getInetAddress())));
+            sessionAction("UPDATE port_stats SET hits = hits + 1 WHERE port = ?", command.getPort());
             sessionAction("UPDATE nodes_stats SET pings_requests = pings_requests + 1 WHERE node_id = ?", command.getId());
             if (command.getGeoRecord().isPresent()) {
                 sessionAction(
@@ -78,6 +89,8 @@ public class CassandraChronicler implements Chronicler {
     public void onFindNode(FindNode command) {
         logger.debug("onFindNode with command = {}", command.toString());
         try {
+            sessionAction("UPDATE known_peers last_update_time = toTimeStamp(now()) WHERE host = ? AND seq = 1", formatIpV4(fromIpv4toLong(command.getInetAddress())));
+            sessionAction("UPDATE port_stats SET hits = hits + 1 WHERE port = ?", command.getPort());
             sessionAction("UPDATE nodes_stats SET find_nodes_requests = find_nodes_requests + 1 WHERE node_id = ?", command.getId());
             sessionAction("UPDATE targets SET x = 1 WHERE target_id = ? and node_id = ?", command.getTarget(), command.getId());
             if (command.getGeoRecord().isPresent()) {
@@ -110,6 +123,12 @@ public class CassandraChronicler implements Chronicler {
     public void onGetPeers(GetPeers command) {
         logger.debug("onGetPeers with command = {}", command.toString());
         try {
+            // TODO: Fix
+            // [ERROR] 22  : mayton.network.dhtobserver.db.cassandra.CassandraChronicler !
+            // com.datastax.oss.driver.api.core.servererrors.SyntaxError: line 1:19 no viable alternative at input
+            // 'last_update_time' (UPDATE [known_peers] last_update_time...)
+            sessionAction("UPDATE known_peers last_update_time = toTimeStamp(now()) WHERE host = ? AND seq = 1", formatIpV4(fromIpv4toLong(command.getInetAddress())));
+            sessionAction("UPDATE port_stats SET hits = hits + 1 WHERE port = ?", command.getPort());
             sessionAction("UPDATE info_hash USING TTL " + INFO_HASH_TTL + " SET info_hash = ? WHERE node_id = ?", command.getInfoHash(), command.getId());
             sessionAction("UPDATE nodes_stats SET get_peeers_requests = get_peeers_requests + 1 WHERE node_id = ?", command.getId());
             if (command.getGeoRecord().isPresent()) {
@@ -142,6 +161,8 @@ public class CassandraChronicler implements Chronicler {
     public void onAnnouncePeer(@NotNull AnnouncePeer command) {
         logger.debug("onAnnouncePeer with command = {}", command.toString());
         try {
+            sessionAction("UPDATE known_peers last_update_time = toTimeStamp(now()) WHERE host = ? AND seq = 1", formatIpV4(fromIpv4toLong(command.getInetAddress())));
+            sessionAction("UPDATE port_stats SET hits = hits + 1 WHERE port = ?", command.getPort());
             sessionAction("UPDATE announces USING TTL " + ANNOUNCE_TTL + " SET" +
                             " node_id = ?, " +
                             " token_value = ?, " +

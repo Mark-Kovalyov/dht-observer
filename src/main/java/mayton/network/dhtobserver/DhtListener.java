@@ -6,12 +6,15 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.ThreadContext;
 import java.io.IOException;
+import java.net.BindException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.sql.Time;
 import java.util.Arrays;
 import java.util.concurrent.*;
+
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 public class DhtListener implements Runnable, DhtListenerMBean {
 
@@ -58,33 +61,39 @@ public class DhtListener implements Runnable, DhtListenerMBean {
 
     @Override
     public void run() {
-        ThreadContext.put("shortCode", shortCode);
-        DatagramSocketCallable datagramSocketCallable = new DatagramSocketCallable(port);
-
-        Retryer<DatagramSocket> retryer = RetryerBuilder.<DatagramSocket>newBuilder()
-                .retryIfExceptionOfType(IOException.class)
-                .withWaitStrategy(WaitStrategies.fixedWait(3, TimeUnit.SECONDS))
-                .withStopStrategy(StopStrategies.stopAfterAttempt(20))
-                .withRetryListener(new RetryListener() {
-                    @Override
-                    public <V> void onRetry(Attempt<V> attempt) {
-                        logger.warn("Attempt number {}, cause {}", attempt.getAttemptNumber(), attempt.getExceptionCause().getMessage());
-                    }
-                })
-                .build();
 
         try {
+            ThreadContext.put("shortCode", shortCode);
+
+            DatagramSocketCallable datagramSocketCallable = new DatagramSocketCallable(port);
+
+            Retryer<DatagramSocket> retryer = RetryerBuilder.<DatagramSocket>newBuilder()
+                    .retryIfExceptionOfType(BindException.class)
+                    .withWaitStrategy(WaitStrategies.randomWait(1000, MILLISECONDS, 7000, MILLISECONDS))
+                    .withStopStrategy(StopStrategies.stopAfterAttempt(20))
+                    .withRetryListener(new RetryListener() {
+                        @Override
+                        public <V> void onRetry(Attempt<V> attempt) {
+                            logger.warn("Attempt number : {}, delay since first attempt : {} ms", attempt.getAttemptNumber(), attempt.getDelaySinceFirstAttempt());
+                        }
+                    })
+                    .build();
+
             DatagramSocket socket = retryer.call(datagramSocketCallable);
-            logger.info("Started {} listener, threadId = {}", threadName, Thread.currentThread().getId());
-            while (!Thread.currentThread().isInterrupted()) {
-                byte[] buf = new byte[320]; // WTF?
-                DatagramPacket packet = new DatagramPacket(buf, buf.length);
-                socket.receive(packet);
-                InetAddress address = packet.getAddress();
-                logger.trace("receive udp packet : {}", packet.getAddress().toString());
-                udpPackets.put(Triple.of(Arrays.copyOf(buf, buf.length), address, port));
+            if (socket != null) {
+                logger.info("Started {} listener, threadId = {}", threadName, Thread.currentThread().getId());
+                while (!Thread.currentThread().isInterrupted()) {
+                    byte[] buf = new byte[320]; // WTF?
+                    DatagramPacket packet = new DatagramPacket(buf, buf.length);
+                    socket.receive(packet);
+                    InetAddress address = packet.getAddress();
+                    logger.trace("receive udp packet : {}", packet.getAddress().toString());
+                    udpPackets.put(Triple.of(Arrays.copyOf(buf, buf.length), address, port));
+                }
+                logger.info("Interrupted!");
+            } else {
+                logger.warn("Unable to create UDP socket listener after retryer attemts. Aborted!");
             }
-            logger.info("Interrupted!");
         } catch (RetryException | ExecutionException | IOException e) {
             logger.error("!", e);
         } catch (InterruptedException e) {
