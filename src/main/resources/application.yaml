@@ -20,9 +20,9 @@ application :
     - threadName: "Transm"
       port: 46434
       shortCode: "TR2"
-    - threadName: "Transm"
-      port: 51413
-      shortCode: "TR1"
+    #- threadName: "Transm"
+    #  port: 51413
+    #  shortCode: "TR1"
     - threadName: "Transm"
       port: 48529
       shortCode: "TR3"

@@ -172,7 +172,7 @@ public class UDPConsumer implements Runnable {
                         Map<String, Object> sendMap = new TreeMap<>();
                             sendMap.put("id", sender_node_id);
                             sendMap.put("token", generateRandomToken());
-                            sendMap.put("values", reporter.knownPeers().stream().limit(10).collect(Collectors.toList()));
+                            sendMap.put("values", reporter.knownPeers());
                             
                         try (DatagramSocket socket = new DatagramSocket()) {
                             logger.debug("Pong prepare...");

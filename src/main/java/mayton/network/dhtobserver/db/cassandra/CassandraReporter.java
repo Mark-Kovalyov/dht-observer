@@ -29,14 +29,18 @@ public class CassandraReporter implements Reporter {
     @NotNull
     @Override
     public List<String> knownPeers() {
-        ResultSet res = session.execute("select last_update_time,host from known_peers where seq=1 order by last_update_time desc limit 10");
+
+
         List<String> peers = new ArrayList<>();
+        peers.add("118.69.233.218");
+        peers.add("46.53.250.51");
+        /*ResultSet res = session.execute("select last_update_time,host from known_peers where seq=1 order by last_update_time desc limit 10");
         for(Row row : res) {
             String host = row.getString("host");
             logger.debug("host = {}", host);
             peers.add(host);
         }
-        logger.debug("overall : {} items", peers.size());
+        logger.debug("overall : {} items", peers.size());*/
         return peers;
     }
 

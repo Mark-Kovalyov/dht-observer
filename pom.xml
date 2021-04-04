@@ -132,7 +132,6 @@
             <version>3.4.2</version>
         </dependency>
 
-
         <!-- Logging -->
 
         <dependency>
@@ -166,6 +165,22 @@
             <artifactId>java-driver-query-builder</artifactId>
             <version>4.10.0</version>
         </dependency>
+
+        <!-- Ignite -->
+
+        <dependency>
+            <groupId>org.apache.ignite</groupId>
+            <artifactId>ignite-core</artifactId>
+            <version>2.10.0</version>
+        </dependency>
+
+        <!--  -->
+        <dependency>
+            <groupId>com.netflix.hystrix</groupId>
+            <artifactId>hystrix-core</artifactId>
+            <version>1.5.18</version>
+        </dependency>
+
 
         <dependency>
             <groupId>com.datastax.oss</groupId>
