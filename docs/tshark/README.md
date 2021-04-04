@@ -162,7 +162,16 @@ tshark -i wlp7s0 -f "src port 53" -n -T fields -e dns.qry.name -e dns.resp.addr
 ### tshark : Yet another sample 
 
 ```
-tshark -i wlp7s0 -f "udp dst port 51413" -T fields -e udp.srcport -e udp.dstport -e data
+tshark -i wlp7s0 -f "udp dst port 51413" -T fields -e ip.addr -e udp.srcport -e udp.dstport 
+```
+
+### Multiple ports
+
+tshark -i wlp7s0 -f "udp port 51413 or udp port 16680 or udp port 49001 or udp port 43567" -T fields -e ip.addr -e udp.srcport -e udp.dstport -e data
+
+### Sample
+```
+tshark -o 'gui.column.format:"Source Net Addr","%uns","Dest Net Addr", "%und"' -Y "ip"
 ```
 
 ### Show possible fields

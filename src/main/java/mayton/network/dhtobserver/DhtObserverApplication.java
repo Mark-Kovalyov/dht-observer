@@ -29,7 +29,7 @@ public class DhtObserverApplication {
 
         dhtListenerList = configProvider.threadConfig()
                 .stream()
-                .map(i -> new DhtListener(i.getMiddle(), i.getRight())).collect(Collectors.toList());
+                .map(i -> new DhtListener(i.getLeft(), i.getRight())).collect(Collectors.toList());
 
         dhtListenerList.forEach(thread -> injector.getInstance(ExecutorServiceProvider.class).executorService().execute(thread));
     }

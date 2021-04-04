@@ -1,12 +1,11 @@
 package mayton.network.dhtobserver;
 
 import com.google.inject.Inject;
-import org.apache.commons.lang3.tuple.Triple;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.yaml.snakeyaml.Yaml;
 
-import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -30,7 +29,7 @@ public class YamlConfigProvider implements ConfigProvider{
         logger.info("init done");
     }
 
-    public List<Triple<String, Integer, String >> threadConfig() {
+    public List<Pair<Integer, String >> threadConfig() {
         Object listenersArr = ((LinkedHashMap<String, Object>)(((LinkedHashMap<String, Object>)root).get("application"))).get("listeners");
 
         ArrayList<LinkedHashMap> res = (ArrayList) listenersArr;
@@ -42,8 +41,8 @@ public class YamlConfigProvider implements ConfigProvider{
                         .collect(Collectors.toList()));
     }
 
-    public static Triple<String, Integer, String> mapToTriple(LinkedHashMap<String, Object> lhm) {
-        return Triple.of((String) lhm.get("threadName"), (Integer) lhm.get("port"), (String) lhm.get("shortCode"));
+    public static Pair<Integer, String> mapToTriple(LinkedHashMap<String, Object> lhm) {
+        return Pair.of((Integer) lhm.get("port"), (String) lhm.get("shortCode"));
     }
 
 }

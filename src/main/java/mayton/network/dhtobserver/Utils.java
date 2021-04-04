@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonEncoding;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.PrettyPrinter;
+import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -50,6 +51,11 @@ public class Utils {
             }
         }
         return stringJoiner.toString();
+    }
+
+    @NotNull
+    public static String dumpBencodedMapWithJackson(Map<String, Object> res) {
+        return dumpBencodedMapWithJackson(res, new DefaultPrettyPrinter());
     }
 
     @NotNull

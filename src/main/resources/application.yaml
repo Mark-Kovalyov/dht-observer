@@ -1,32 +1,19 @@
 application :
   listeners:
-    - threadName : "Vuze-1"
-      port : 16680
-      shortCode : "VZ1"
-    - threadName: "Vuze-2"
-      port: 49001
-      shortCode: "VZ2"
-    - threadName: "Vuze-3"
-      port : 43567
-      shortCode: "VZ3"
+    - { port : 16680, shortCode : "VZ1" }
+    - { port : 49001, shortCode : "VZ2" }
+    - { port : 43567, shortCode : "VZ3" }
 
-    - threadName: "A-Mule"
-      port: 4665
-      shortCode: "AM1"
-    - threadName: "A-Mule"
-      port: 4672
-      shortCode: "AM2"
+    - { port : 4665,  shortCode : "AM1" }
+    - { port : 4672,  shortCode : "AM2" }
 
-    - threadName: "Transm"
-      port: 46434
-      shortCode: "TR2"
-    #- threadName: "Transm"
-    #  port: 51413
-    #  shortCode: "TR1"
-    - threadName: "Transm"
-      port: 48529
-      shortCode: "TR3"
+    - { port : 51413, shortCode : "TR1" }
+    - { port : 46434, shortCode : "TR2" }
+    - { port : 48529, shortCode : "TR3" }
 
 geoDb:
   csvPath : "/storage/db/geo/maxmind/2010-10.MaxMind GeoIP City CSV Format/GeoIP-139_20101001/GeoIPCity.utf-8.csv"
+
+
+
 
