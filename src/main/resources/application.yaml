@@ -14,6 +14,9 @@ application :
 geoDb:
   csvPath : "/storage/db/geo/maxmind/2010-10.MaxMind GeoIP City CSV Format/GeoIP-139_20101001/GeoIPCity.utf-8.csv"
 
+ipFilterEmule:
+  guardingPath : "/storage/db/amule/guarding.p2p"
+
 
 
 
