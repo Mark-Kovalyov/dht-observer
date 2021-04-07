@@ -18,9 +18,11 @@ public class IgniteChronicler implements Chronicler {
 
     static Logger logger = LogManager.getLogger(IgniteChronicler.class);
 
+    private String igniteHostPort = "127.0.0.1:10800";
+
     @Inject
     public void init() {
-        ClientConfiguration cfg = new ClientConfiguration().setAddresses("127.0.0.1:10800");
+        ClientConfiguration cfg = new ClientConfiguration().setAddresses(igniteHostPort);
         try (IgniteClient igniteClient = Ignition.startClient(cfg)) {
 
         } catch (Exception e) {

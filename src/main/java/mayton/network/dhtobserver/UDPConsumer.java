@@ -13,6 +13,7 @@ import mayton.network.dhtobserver.geo.GeoRecord;
 import mayton.network.dhtobserver.jfr.DhtParseEvent;
 import mayton.network.dhtobserver.security.BannedIpRange;
 import org.apache.commons.codec.binary.Hex;
+import org.apache.commons.lang3.Validate;
 import org.apache.commons.lang3.tuple.Triple;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -34,9 +35,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
 
-import static mayton.network.dhtobserver.Constants.DHT_EVEN_TYPE;
+import static mayton.network.dhtobserver.Constants.DHT_EVENT_TYPE;
 import static mayton.network.dhtobserver.Utils.binhex;
 import static mayton.network.dhtobserver.Utils.generateRandomToken;
 
@@ -63,6 +63,8 @@ public class UDPConsumer implements Runnable {
     private String destPath = "/bigdata/dht-observer/out";
 
     private Random random = new Random();
+
+    private BEncoder encoder = new BEncoder();
 
     public UDPConsumer(BlockingQueue<Triple<byte[], InetAddress, Integer>> udpPackets, String threadName, String shortCode) {
         this.udpPackets = udpPackets;
@@ -134,7 +136,7 @@ public class UDPConsumer implements Runnable {
             }
             Optional<Ping> pingCommandOptional = tryToExtractPingCommand(res, packet, geoRecordOptional);
             if (pingCommandOptional.isPresent()) {
-                MDC.put(DHT_EVEN_TYPE, Ping.class.getName());
+                MDC.put(DHT_EVENT_TYPE, Ping.class.getName());
                 // ping Query = {"t":"aa", "y":"q", "q":"ping", "a":{"id":"abcdefghij0123456789"}}
                 // bencoded = d1:ad2:id20:abcdefghij0123456789e1:q4:ping1:t2:aa1:y1:qe
                 //
@@ -142,7 +144,7 @@ public class UDPConsumer implements Runnable {
                 // bencoded = d1:rd2:id20:mnopqrstuvwxyz123456e1:t2:aa1:y1:re
                 logger.info("Ping detected");
                 try(DatagramSocket socket = new DatagramSocket()) {
-                    BEncoder encoder = new BEncoder();
+
                     Map<String, Object> sendMap = new TreeMap<>();
                         sendMap.put("r", Collections.singletonMap("id", Constants.PEER_ID));
                         sendMap.put("t", "aa".getBytes(StandardCharsets.UTF_8));
@@ -158,48 +160,55 @@ public class UDPConsumer implements Runnable {
             } else {
                 Optional<FindNode> findNodeOptional = tryToExtractFindNode(res, packet, geoRecordOptional);
                 if (findNodeOptional.isPresent()) {
-                    MDC.put(DHT_EVEN_TYPE, FindNode.class.getName());
+                    MDC.put(DHT_EVENT_TYPE, FindNode.class.getName());
                     logger.info("Find_node request detected");
                     chronicler.onFindNode(findNodeOptional.get());
                 } else {
                     Optional<GetPeers> getPeersOptional = extractGetPeers(res, packet, geoRecordOptional);
                     if (getPeersOptional.isPresent()) {
-                        MDC.put(DHT_EVEN_TYPE, GetPeers.class.getName());
-                        chronicler.onGetPeers(getPeersOptional.get());
-                        // response: {"id" : "<queried nodes id>", "token" :"<opaque write token>", "values" : ["<peer 1 info string>", "<peer 2 info string>"]}
-                        // or: {"id" : "<queried nodes id>", "token" :"<opaque write token>", "nodes" : "<compact node info>"}
                         byte[] sender_node_id = (byte[]) res.get("id");
-                        Map<String, Object> sendMap = new TreeMap<>();
-                            sendMap.put("id", sender_node_id);
-                            sendMap.put("token", generateRandomToken());
-                            sendMap.put("values", reporter.knownPeers());
-                            
-                        try (DatagramSocket socket = new DatagramSocket()) {
-                            logger.debug("Pong prepare...");
-                            BEncoder encoder = new BEncoder();
-                            // TODO:Fix
-                            // [WARN ] 22  : dhtlisteners.TR1 !
-                            // java.lang.RuntimeException: unknown object to encode null
-                            //	at the8472.bencode.BEncoder.encodeInternal(BEncoder.java:116) ~[bt-dht-1.9.jar:1.9]
-                            //	at the8472.bencode.BEncoder.lambda$encodeMap$0(BEncoder.java:147) ~[bt-dht-1.9.jar:1.9]
-                            //	at java.util.TreeMap$EntrySpliterator.forEachRemaining(TreeMap.java:2962) ~[?:?]
-                            //	at java.util.stream.ReferencePipeline$Head.forEachOrdered(ReferencePipeline.java:668) ~[?:?]
-                            //	at the8472.bencode.BEncoder.encodeMap(BEncoder.java:145) ~[bt-dht-1.9.jar:1.9]
-                            //	at the8472.bencode.BEncoder.encode(BEncoder.java:37) ~[bt-dht-1.9.jar:1.9]
-                            //	at mayton.network.dhtobserver.UDPConsumer.decodeCommand(UDPConsumer.java:180) [dht-observer.jar:?]
-                            //	at mayton.network.dhtobserver.UDPConsumer.run(UDPConsumer.java:101) [dht-observer.jar:?]
-                            //	at java.lang.Thread.run(Thread.java:834) [?:?]
-                            ByteBuffer sendBuffer = encoder.encode(sendMap, 320);
-                            byte[] sendBytes = sendBuffer.array();
-                            // TODO: Finish
-                            socket.send(new DatagramPacket(sendBytes, sendBytes.length, packet.getAddress(), packet.getPort()));
-                            logger.debug("Pong : {}", Utils.dumpBencodedMapWithJackson(sendMap, new DefaultPrettyPrinter()));
-                        }
+                        if (sender_node_id == null) {
+                            logger.warn("Hmm.. 'geet_peers' without id?");
+                        } else {
+                            MDC.put(DHT_EVENT_TYPE, GetPeers.class.getName());
+                            String token = generateRandomToken();
+                            Validate.notNull(reporter.knownPeers(), "Known peers must be not null");
+                            chronicler.onGetPeers(getPeersOptional.get());
+                            // response: {"id" : "<queried nodes id>", "token" :"<opaque write token>", "values" : ["<peer 1 info string>", "<peer 2 info string>"]}
+                            // or: {"id" : "<queried nodes id>", "token" :"<opaque write token>", "nodes" : "<compact node info>"}
+                            Map<String, Object> sendMap2 = new TreeMap<>();
+                            sendMap2.put("id", sender_node_id);
+                            sendMap2.put("token", token);
+                            sendMap2.put("values", reporter.knownPeers());
 
+                            try (DatagramSocket socket = new DatagramSocket()) {
+                                logger.debug("Pong prepare...");
+                                // TODO:Fix
+                                // [WARN ] 21  : dhtlisteners.TR1 !
+                                // java.lang.RuntimeException: unknown object to encode null
+                                //	at the8472.bencode.BEncoder.encodeInternal(BEncoder.java:116) ~[bt-dht-1.9.jar:1.9]
+                                //	at the8472.bencode.BEncoder.lambda$encodeMap$0(BEncoder.java:147) ~[bt-dht-1.9.jar:1.9]
+                                //	at java.util.TreeMap$EntrySpliterator.forEachRemaining(TreeMap.java:2962) ~[?:?]
+                                //	at java.util.stream.ReferencePipeline$Head.forEachOrdered(ReferencePipeline.java:668) ~[?:?]
+                                //	at the8472.bencode.BEncoder.encodeMap(BEncoder.java:145) ~[bt-dht-1.9.jar:1.9]
+                                //	at the8472.bencode.BEncoder.encode(BEncoder.java:37) ~[bt-dht-1.9.jar:1.9]
+                                //	at mayton.network.dhtobserver.UDPConsumer.decodeCommand(UDPConsumer.java:192) [dht-observer.jar:?]
+                                //	at mayton.network.dhtobserver.UDPConsumer.run(UDPConsumer.java:101) [dht-observer.jar:?]
+                                //	at java.lang.Thread.run(Thread.java:834) [?:?]
+                                ByteBuffer sendBuffer2 = encoder.encode(sendMap2, 320);
+                                byte[] sendBytes2 = sendBuffer2.array();
+                                // TODO: Finish
+                                Validate.notNull(sendBytes2, "Send bytes must be non null");
+                                Validate.notNull(packet, "UDP packet is empty");
+                                Validate.notNull(packet.getAddress(), "Adress of UDP packet is empty");
+                                socket.send(new DatagramPacket(sendBytes2, sendBytes2.length, packet.getAddress(), packet.getPort()));
+                                logger.debug("Pong : {}", Utils.dumpBencodedMapWithJackson(sendMap2, new DefaultPrettyPrinter()));
+                            }
+                        }
                     } else {
                         Optional<AnnouncePeer> optionalAnnouncePeer = extractAnnounce(res, packet, geoRecordOptional);
                         if (optionalAnnouncePeer.isPresent()) {
-                            MDC.put(DHT_EVEN_TYPE, AnnouncePeer.class.getName());
+                            MDC.put(DHT_EVENT_TYPE, AnnouncePeer.class.getName());
                             // announce_peers Query = {"t":"aa", "y":"q", "q":"announce_peer", "a": {"id":"abcdefghij0123456789", "implied_port": 1, "info_hash":"mnopqrstuvwxyz123456", "port": 6881, "token": "aoeusnth"}}
                             // Response = {"t":"aa", "y":"r", "r": {"id":"mnopqrstuvwxyz123456"}}
                             // TODO: Refactor
@@ -234,7 +243,7 @@ public class UDPConsumer implements Runnable {
                 logger.warn("!", e);
             }
         } finally {
-            MDC.remove(DHT_EVEN_TYPE);
+            MDC.remove(DHT_EVENT_TYPE);
         }
     }
 

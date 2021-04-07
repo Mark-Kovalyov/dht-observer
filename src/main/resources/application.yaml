@@ -17,6 +17,7 @@ geoDb:
 ipFilterEmule:
   guardingPath : "/storage/db/amule/guarding.p2p"
 
-
+igniteChronicler :
+  hostPort : ""
 
 
