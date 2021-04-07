@@ -8,6 +8,7 @@ import mayton.network.dhtobserver.db.IpFilter;
 import mayton.network.dhtobserver.db.Reporter;
 import mayton.network.dhtobserver.db.cassandra.CassandraChronicler;
 import mayton.network.dhtobserver.db.cassandra.CassandraReporter;
+import mayton.network.dhtobserver.db.ignite.IgniteChronicler;
 import mayton.network.dhtobserver.db.pg.PGChronicler;
 import mayton.network.dhtobserver.geo.GeoDbImpl;
 import mayton.network.dhtobserver.security.IpFilterEmule;
@@ -28,6 +29,11 @@ public class DhtObserverModule extends AbstractModule {
         bind(Chronicler.class)
                 .annotatedWith(Names.named("pg"))
                 .to(PGChronicler.class)
+                .in(Scopes.SINGLETON);
+
+        bind(Chronicler.class)
+                .annotatedWith(Names.named("ignite"))
+                .to(IgniteChronicler.class)
                 .in(Scopes.SINGLETON);
 
         bind(GeoDb.class)

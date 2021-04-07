@@ -20,17 +20,20 @@ public class YamlConfigProvider implements ConfigProvider{
 
     private Object root;
 
+    private LinkedHashMap<String, Object> application;
+
     @Inject
     public void init() {
         logger.info("init");
         Yaml yaml = new Yaml();
         InputStream inputStream = getClass().getClassLoader().getResourceAsStream("application.yaml");
         root = yaml.load(inputStream);
+        application = (LinkedHashMap<String, Object>) ((LinkedHashMap<String, Object>) root).get("application");
         logger.info("init done");
     }
 
     public List<Pair<Integer, String >> threadConfig() {
-        Object listenersArr = ((LinkedHashMap<String, Object>)(((LinkedHashMap<String, Object>)root).get("application"))).get("listeners");
+        Object listenersArr = application.get("listeners");
 
         ArrayList<LinkedHashMap> res = (ArrayList) listenersArr;
 
@@ -39,6 +42,11 @@ public class YamlConfigProvider implements ConfigProvider{
                 res.stream()
                         .map(item -> mapToTriple((LinkedHashMap<String, Object>) item))
                         .collect(Collectors.toList()));
+    }
+
+    @Override
+    public String getNodeId() {
+        return (String) application.get("peer_id");
     }
 
     public static Pair<Integer, String> mapToTriple(LinkedHashMap<String, Object> lhm) {

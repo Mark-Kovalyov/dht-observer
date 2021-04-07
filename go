@@ -1,5 +1,9 @@
 #!/bin/bash -ev
 
+rm -fr bin
+
+mkdir bin
+
 mvn clean package -DskipTests
 mvn install dependency:copy-dependencies
 

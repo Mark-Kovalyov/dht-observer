@@ -63,7 +63,7 @@ public class DhtGetPeers {
 
         t.start();
 
-        Map<String, Object> sendMap = prepareDhtGetPeersCommand(Constants.PEER_ID.getBytes(StandardCharsets.UTF_8));
+        Map<String, Object> sendMap = prepareDhtGetPeersCommand("8573195880de48268c84cd58bcc5a19b".getBytes(StandardCharsets.UTF_8));
 
         String hosts[] = {
                 "212.66.34.3", "92.249.115.215"

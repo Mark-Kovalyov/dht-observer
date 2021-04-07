@@ -66,6 +66,10 @@ public class UDPConsumer implements Runnable {
 
     private BEncoder encoder = new BEncoder();
 
+    private ConfigProvider configProvider;
+
+    private String nodeId;
+
     public UDPConsumer(BlockingQueue<Triple<byte[], InetAddress, Integer>> udpPackets, String threadName, String shortCode) {
         this.udpPackets = udpPackets;
         this.threadName = threadName;
@@ -78,10 +82,12 @@ public class UDPConsumer implements Runnable {
 
     @Override
     public void run() {
+        configProvider = DhtObserverApplication.injector.getInstance(ConfigProvider.class);
         chronicler = DhtObserverApplication.injector.getInstance(Chronicler.class);
         geoDb = DhtObserverApplication.injector.getInstance(GeoDb.class);
         reporter = DhtObserverApplication.injector.getInstance(Reporter.class);
         ipFilter = DhtObserverApplication.injector.getInstance(IpFilter.class);
+        nodeId = configProvider.getNodeId();
         while(!Thread.currentThread().isInterrupted()) {
             try {
                 logger.trace("Consume...");
@@ -146,7 +152,7 @@ public class UDPConsumer implements Runnable {
                 try(DatagramSocket socket = new DatagramSocket()) {
 
                     Map<String, Object> sendMap = new TreeMap<>();
-                        sendMap.put("r", Collections.singletonMap("id", Constants.PEER_ID));
+                        sendMap.put("r", Collections.singletonMap("id", nodeId));
                         sendMap.put("t", "aa".getBytes(StandardCharsets.UTF_8));
                         sendMap.put("y", "r".getBytes(StandardCharsets.UTF_8));
 
