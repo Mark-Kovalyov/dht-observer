@@ -11,6 +11,7 @@
 
 	<properties>
 		<java.version>11</java.version>
+        <dagger.version>2.34</dagger.version>
 	</properties>
 
     <profiles>
@@ -212,20 +213,19 @@
             <scope>test</scope>
         </dependency>
 
-        <!-- Guice -->
+        <!-- Dagger -->
 
         <dependency>
-            <groupId>com.google.inject</groupId>
-            <artifactId>guice</artifactId>
-            <version>4.2.3</version>
+            <groupId>com.google.dagger</groupId>
+            <artifactId>dagger</artifactId>
+            <version>${dagger.version}</version>
         </dependency>
 
         <dependency>
-            <groupId>net.jmob</groupId>
-            <artifactId>guice.conf</artifactId>
-            <version>1.4.3</version>
+            <groupId>com.google.dagger</groupId>
+            <artifactId>dagger-compiler</artifactId>
+            <version>${dagger.version}</version>
         </dependency>
-
 
         <!-- JMH -->
 
