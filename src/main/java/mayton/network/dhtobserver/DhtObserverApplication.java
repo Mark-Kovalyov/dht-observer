@@ -1,7 +1,5 @@
 package mayton.network.dhtobserver;
 
-import com.google.inject.Guice;
-import com.google.inject.Injector;
 import mayton.network.dhtobserver.db.Chronicler;
 import mayton.network.dhtobserver.db.Reporter;
 import org.apache.logging.log4j.LogManager;
@@ -20,18 +18,19 @@ public class DhtObserverApplication {
 
     static Logger logger = LogManager.getLogger(DhtObserverApplication.class);
 
-    public static Injector injector = Guice.createInjector(DhtObserverModule.dhtObserverModule);
-
     public static List<DhtListener> dhtListenerList;
 
     public DhtObserverApplication() {
-        ConfigProvider configProvider = injector.getInstance(ConfigProvider.class);
+        ConfigProvider configProvider = ConfigProviderService.create();
 
         dhtListenerList = configProvider.threadConfig()
                 .stream()
                 .map(i -> new DhtListener(i.getLeft(), i.getRight())).collect(Collectors.toList());
 
-        dhtListenerList.forEach(thread -> injector.getInstance(ExecutorServiceProvider.class).executorService().execute(thread));
+        dhtListenerList.forEach(thread -> {
+            ExecutorServiceProvider executorServiceProvider = ExecutorServiceProviderService.create();
+            executorServiceProvider.executorService().execute(thread);
+        });
     }
 
 	public static void main(String[] args) {
@@ -48,7 +47,7 @@ public class DhtObserverApplication {
         }
         Thread shutdownHook = new Thread(() -> {
             logger.warn("Shutdown hook called!");
-            ExecutorService executorService = injector.getInstance(ExecutorServiceProvider.class).executorService();
+            ExecutorService executorService = DaggerExecutorService.create();
             executorService.shutdown();
             logger.warn(":: signalling stop for all threads");
             dhtListenerList.forEach(DhtListener::askStop);
@@ -73,8 +72,8 @@ public class DhtObserverApplication {
                 // Preserve interrupt status
             }
             try {
-                injector.getInstance(Chronicler.class).close();
-                injector.getInstance(Reporter.class).close();
+                Chronicler chronicler = ChroniclerService.create().close();
+                Reporter reporter = ReporterService.create().close();
             } catch (Exception ex) {
                 logger.warn("!", ex);
             }

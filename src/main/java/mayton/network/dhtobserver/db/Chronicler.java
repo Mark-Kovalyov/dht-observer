@@ -1,9 +1,14 @@
 package mayton.network.dhtobserver.db;
 
+import dagger.Component;
+import mayton.network.dhtobserver.DhtObserverModule;
 import mayton.network.dhtobserver.dht.*;
 
 import javax.annotation.Nonnull;
+import javax.inject.Singleton;
 
+@Singleton
+@Component(modules = DhtObserverModule.class)
 public interface Chronicler extends AutoCloseable {
 
     default void onEvent(@Nonnull DhtEvent command) {

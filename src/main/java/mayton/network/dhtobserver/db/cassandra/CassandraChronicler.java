@@ -5,7 +5,6 @@ import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 
 import mayton.network.dhtobserver.db.Chronicler;
-import mayton.network.dhtobserver.db.UDPReceiver;
 import mayton.network.dhtobserver.dht.AnnouncePeer;
 import mayton.network.dhtobserver.dht.FindNode;
 import mayton.network.dhtobserver.dht.GetPeers;
@@ -15,9 +14,6 @@ import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import javax.annotation.Nonnull;
-
-import static mayton.network.NetworkUtils.formatIpV4;
-import static mayton.network.NetworkUtils.fromIpv4toLong;
 
 public class CassandraChronicler implements Chronicler {
 
