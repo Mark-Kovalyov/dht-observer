@@ -15,7 +15,7 @@ import java.util.concurrent.*;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
-public class DhtListener implements Runnable, DhtListenerMBean {
+public class DhtListener implements Runnable {
 
     private Logger logger;
 
@@ -108,13 +108,4 @@ public class DhtListener implements Runnable, DhtListenerMBean {
         Thread.currentThread().interrupt();
     }
 
-    @Override
-    public int getReceivedPackets() {
-        return 0;
-    }
-
-    @Override
-    public int getSentPackets() {
-        return 0;
-    }
 }

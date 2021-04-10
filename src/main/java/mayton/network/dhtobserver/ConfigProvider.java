@@ -10,6 +10,7 @@ public interface ConfigProvider {
     @Nonnull
     List<Pair<Integer, String >> threadConfig();
 
+    @Nonnull
     String getNodeId();
 
 }

@@ -2,6 +2,9 @@ package mayton.network.dhtobserver.dht;
 
 import mayton.network.NetworkUtils;
 import mayton.network.dhtobserver.geo.GeoRecord;
+import org.jetbrains.annotations.Range;
+
+import javax.validation.constraints.NotNull;
 import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.util.Optional;
@@ -14,7 +17,7 @@ public abstract class DhtEvent {
 
     private int port;
 
-    public DhtEvent(Optional<GeoRecord> geoRecord, InetAddress inetAddress, int port) {
+    public DhtEvent(Optional<GeoRecord> geoRecord, @NotNull InetAddress inetAddress, @Range(from = 0, to = 65535) int port) {
         this.geoRecord = geoRecord;
         this.inetAddress = inetAddress;
         this.port = port;
@@ -33,11 +36,6 @@ public abstract class DhtEvent {
     }
 
     public String getHostAndPort() {
-        if (inetAddress instanceof Inet4Address) {
-            return NetworkUtils.formatIpV4((Inet4Address) inetAddress) + ":" + port;
-        } else {
-            return "[IPV6]:" + port;
-        }
-
+        return NetworkUtils.formatIpV4((Inet4Address) inetAddress) + ":" + port;
     }
 }

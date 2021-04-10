@@ -1,11 +1,11 @@
 package mayton.network.dhtobserver;
 
-import org.jetbrains.annotations.NotNull;
+import javax.annotation.Nonnull;
 
 public interface DhtActor {
 
-    void ping(@NotNull String nodeId);
+    void ping(@Nonnull String nodeId);
 
-    void announce(@NotNull String some);
+    void announce(@Nonnull String some);
 
 }
