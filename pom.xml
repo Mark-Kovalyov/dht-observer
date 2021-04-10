@@ -278,8 +278,17 @@
                 <version>3.8.0</version>
                 <configuration>
                     <release>11</release>
+                    <!-- Dagger compillation -->
+                    <annotationProcessorPaths>
+                        <path>
+                            <groupId>com.google.dagger</groupId>
+                            <artifactId>dagger-compiler</artifactId>
+                            <version>${dagger.version}</version>
+                        </path>
+                    </annotationProcessorPaths>
                 </configuration>
             </plugin>
+
         </plugins>
     </build>
 

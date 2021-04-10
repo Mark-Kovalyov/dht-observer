@@ -4,7 +4,6 @@ import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 
-import com.google.inject.Inject;
 import mayton.network.dhtobserver.db.Chronicler;
 import mayton.network.dhtobserver.db.UDPReceiver;
 import mayton.network.dhtobserver.dht.AnnouncePeer;

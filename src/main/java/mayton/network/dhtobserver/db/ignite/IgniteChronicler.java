@@ -1,6 +1,6 @@
 package mayton.network.dhtobserver.db.ignite;
 
-import com.google.inject.Inject;
+
 import mayton.network.dhtobserver.DhtObserverApplication;
 import mayton.network.dhtobserver.db.Chronicler;
 import mayton.network.dhtobserver.dht.AnnouncePeer;

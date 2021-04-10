@@ -1,7 +1,5 @@
 package mayton.network.dhtobserver.db;
 
-import org.jetbrains.annotations.Range;
-
 import javax.annotation.Nonnull;
 
 public interface UDPReceiver {

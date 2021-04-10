@@ -1,7 +1,6 @@
 package mayton.network.dhtobserver.dht;
 
 import mayton.network.dhtobserver.geo.GeoRecord;
-import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nonnull;
 import javax.annotation.concurrent.Immutable;

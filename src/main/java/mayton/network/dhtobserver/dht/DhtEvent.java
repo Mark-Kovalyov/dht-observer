@@ -2,7 +2,6 @@ package mayton.network.dhtobserver.dht;
 
 import mayton.network.NetworkUtils;
 import mayton.network.dhtobserver.geo.GeoRecord;
-import org.jetbrains.annotations.Range;
 
 import javax.validation.constraints.NotNull;
 import java.net.Inet4Address;

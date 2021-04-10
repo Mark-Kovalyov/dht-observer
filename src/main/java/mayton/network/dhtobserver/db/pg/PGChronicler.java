@@ -1,6 +1,6 @@
 package mayton.network.dhtobserver.db.pg;
 
-import com.google.inject.Inject;
+
 import mayton.network.dhtobserver.db.Chronicler;
 import mayton.network.dhtobserver.dht.AnnouncePeer;
 import mayton.network.dhtobserver.dht.FindNode;
