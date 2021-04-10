@@ -1,8 +1,7 @@
 package mayton.network.dhtobserver;
 
-import com.google.inject.AbstractModule;
-import com.google.inject.Scopes;
-import com.google.inject.name.Names;
+import dagger.Module;
+import dagger.Provides;
 import mayton.network.dhtobserver.db.Chronicler;
 import mayton.network.dhtobserver.db.IpFilter;
 import mayton.network.dhtobserver.db.Reporter;
@@ -13,45 +12,57 @@ import mayton.network.dhtobserver.db.pg.PGChronicler;
 import mayton.network.dhtobserver.geo.GeoDbImpl;
 import mayton.network.dhtobserver.security.IpFilterEmule;
 
-public class DhtObserverModule extends AbstractModule {
+import javax.inject.Singleton;
 
-    // OMG! This is so stuped to imlement singleton for Guice-module to create singleton! Ahaha...
-    public static DhtObserverModule dhtObserverModule = new DhtObserverModule();
+@Module
+public class DhtObserverModule {
 
-    private DhtObserverModule() {}
-
-    @Override
-    protected void configure() {
-        bind(Chronicler.class)
-                .to(CassandraChronicler.class)
-                .in(Scopes.SINGLETON);
-
-        bind(Chronicler.class)
-                .annotatedWith(Names.named("pg"))
-                .to(PGChronicler.class)
-                .in(Scopes.SINGLETON);
-
-        bind(Chronicler.class)
-                .annotatedWith(Names.named("ignite"))
-                .to(IgniteChronicler.class)
-                .in(Scopes.SINGLETON);
-
-        bind(GeoDb.class)
-                .to(GeoDbImpl.class)
-                .in(Scopes.SINGLETON);
-
-        bind(Reporter.class)
-                .to(CassandraReporter.class)
-                .in(Scopes.SINGLETON);
-
-        bind(ExecutorServiceProvider.class)
-                .to(ExecutorServiceProviderImpl.class)
-                .in(Scopes.SINGLETON);
-
-        bind(IpFilter.class)
-                .to(IpFilterEmule.class)
-                .in(Scopes.SINGLETON);
-
-        bind(ConfigProvider.class).to(YamlConfigProvider.class).in(Scopes.SINGLETON);
+    @Provides
+    @Singleton
+    public Chronicler provideChronicler() {
+        return new CassandraChronicler();
     }
+
+    @Provides
+    @Singleton
+    public Chronicler providePgChronicler() {
+        return new PGChronicler();
+    }
+
+    @Provides
+    @Singleton
+    public Chronicler provideIgniteChronicler() {
+        return new IgniteChronicler();
+    }
+
+    @Provides
+    @Singleton
+    public GeoDb provideGeoDb() {
+        return new GeoDbImpl();
+    }
+
+    @Provides
+    @Singleton
+    public Reporter provideCassandraReporter() {
+        return new CassandraReporter();
+    }
+
+    @Provides
+    @Singleton
+    public ExecutorServiceProvider provideExecutorServiceProvider() {
+        return new ExecutorServiceProviderImpl();
+    }
+
+    @Provides
+    @Singleton
+    public IpFilter provideIpFilter() {
+        return new IpFilterEmule();
+    }
+
+    @Provides
+    @Singleton
+    public ConfigProvider provideYamlConfigProvider() {
+        return new YamlConfigProvider();
+    }
+
 }
