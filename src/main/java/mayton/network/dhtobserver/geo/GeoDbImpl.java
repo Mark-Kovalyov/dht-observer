@@ -1,6 +1,5 @@
 package mayton.network.dhtobserver.geo;
 
-import com.google.inject.Inject;
 import mayton.network.NetworkUtils;
 import mayton.network.dhtobserver.GeoDb;
 import org.apache.commons.csv.CSVFormat;
@@ -21,8 +20,7 @@ public class GeoDbImpl implements GeoDb {
 
     private String csvPath = "/bigdata/GeoIPCity.utf-8.csv";
 
-    @Inject
-    public void init() {
+    public GeoDbImpl() {
         logger.info("init from {} with objectId = {}" , csvPath, System.identityHashCode(this));
         List<GeoRecord> geoRecordsTemp = new ArrayList<>();
         try(CSVParser csvParser = new CSVParser(new FileReader(csvPath), CSVFormat.DEFAULT.withSkipHeaderRecord(true))) {

@@ -20,7 +20,7 @@ public class IgniteChronicler implements Chronicler {
 
     private String igniteHostPort = "127.0.0.1:10800";
 
-    @Inject
+    //@Inject
     public void init() {
         ClientConfiguration cfg = new ClientConfiguration().setAddresses(igniteHostPort);
         try (IgniteClient igniteClient = Ignition.startClient(cfg)) {

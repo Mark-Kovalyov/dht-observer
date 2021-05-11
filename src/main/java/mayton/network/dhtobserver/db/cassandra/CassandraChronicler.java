@@ -27,8 +27,7 @@ public class CassandraChronicler implements Chronicler {
     private int INFO_HASH_TTL = 1 * 60 * 60;        // 1 hour to keep tokens
     private int ANNOUNCE_TTL  = 30 * 24 * 60 * 60;  // 30 days
 
-    @Inject
-    public void init() {
+    public CassandraChronicler() {
         session = CqlSession.builder().withKeyspace(keyspace).build();
     }
 

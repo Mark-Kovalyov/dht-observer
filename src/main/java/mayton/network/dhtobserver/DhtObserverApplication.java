@@ -20,15 +20,18 @@ public class DhtObserverApplication {
 
     public static List<DhtListener> dhtListenerList;
 
+    public static DhtServiceComponent dhtServiceComponent = DaggerDhtServiceComponent.builder().build();
+
     public DhtObserverApplication() {
-        ConfigProvider configProvider = ConfigProviderService.create();
+
+        ConfigProvider configProvider = dhtServiceComponent.provideConfigProvider();
 
         dhtListenerList = configProvider.threadConfig()
                 .stream()
                 .map(i -> new DhtListener(i.getLeft(), i.getRight())).collect(Collectors.toList());
 
         dhtListenerList.forEach(thread -> {
-            ExecutorServiceProvider executorServiceProvider = ExecutorServiceProviderService.create();
+            ExecutorServiceProvider executorServiceProvider = dhtServiceComponent.provideExecutorServiceProvider();
             executorServiceProvider.executorService().execute(thread);
         });
     }
@@ -47,7 +50,7 @@ public class DhtObserverApplication {
         }
         Thread shutdownHook = new Thread(() -> {
             logger.warn("Shutdown hook called!");
-            ExecutorService executorService = DaggerExecutorService.create();
+            ExecutorService executorService = dhtServiceComponent.provideExecutorServiceProvider().executorService();
             executorService.shutdown();
             logger.warn(":: signalling stop for all threads");
             dhtListenerList.forEach(DhtListener::askStop);
@@ -72,8 +75,8 @@ public class DhtObserverApplication {
                 // Preserve interrupt status
             }
             try {
-                Chronicler chronicler = ChroniclerService.create().close();
-                Reporter reporter = ReporterService.create().close();
+                Chronicler chronicler = dhtServiceComponent.provideChronicler();
+                Reporter reporter = dhtServiceComponent.provideReporter();
             } catch (Exception ex) {
                 logger.warn("!", ex);
             }

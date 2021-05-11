@@ -17,7 +17,6 @@ public class GeoIpComponentBenchmark {
     @Setup(value = Level.Iteration)
     public void setup() {
         geoDb = new GeoDbImpl();
-        ((GeoDbImpl)geoDb).init();
     }
 
     @Benchmark

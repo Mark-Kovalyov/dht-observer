@@ -21,7 +21,6 @@ class GeoIpDbTest {
     @BeforeAll
     static void beforeAll() {
         geoDb = new GeoDbImpl();
-        ((GeoDbImpl)geoDb).init();
     }
 
 

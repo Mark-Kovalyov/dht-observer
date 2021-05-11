@@ -25,18 +25,6 @@ public class DhtObserverModule {
 
     @Provides
     @Singleton
-    public Chronicler providePgChronicler() {
-        return new PGChronicler();
-    }
-
-    @Provides
-    @Singleton
-    public Chronicler provideIgniteChronicler() {
-        return new IgniteChronicler();
-    }
-
-    @Provides
-    @Singleton
     public GeoDb provideGeoDb() {
         return new GeoDbImpl();
     }

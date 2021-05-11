@@ -1,6 +1,5 @@
 package mayton.network.dhtobserver.security;
 
-import com.google.inject.Inject;
 import mayton.network.NetworkUtils;
 import mayton.network.dhtobserver.db.IpFilter;
 import org.apache.logging.log4j.LogManager;
@@ -30,7 +29,7 @@ public class IpFilterEmule implements IpFilter {
 
     private String guardingPath = "/storage/db/amule/guarding.p2p";
 
-    @Inject
+    //@Inject
     public void init() {
         logger.info("init() with instance id = {}", System.identityHashCode(this));
         try (Stream<String> stream = Files.lines(Paths.get(guardingPath))) {

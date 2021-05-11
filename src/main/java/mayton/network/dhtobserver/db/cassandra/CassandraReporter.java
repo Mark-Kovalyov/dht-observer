@@ -21,8 +21,7 @@ public class CassandraReporter implements Reporter {
 
     private String keyspace = "dhtspace";
 
-    @Inject
-    public void init() {
+    public CassandraReporter() {
         session = CqlSession.builder().withKeyspace(keyspace).build();
     }
 

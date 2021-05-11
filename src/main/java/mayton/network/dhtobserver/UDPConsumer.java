@@ -82,11 +82,11 @@ public class UDPConsumer implements Runnable {
 
     @Override
     public void run() {
-        configProvider = DhtObserverApplication.injector.getInstance(ConfigProvider.class);
-        chronicler = DhtObserverApplication.injector.getInstance(Chronicler.class);
-        geoDb = DhtObserverApplication.injector.getInstance(GeoDb.class);
-        reporter = DhtObserverApplication.injector.getInstance(Reporter.class);
-        ipFilter = DhtObserverApplication.injector.getInstance(IpFilter.class);
+        configProvider = DhtObserverApplication.dhtServiceComponent.provideConfigProvider();
+        chronicler = DhtObserverApplication.dhtServiceComponent.provideChronicler();
+        geoDb = DhtObserverApplication.dhtServiceComponent.provideGeoDb();
+        reporter = DhtObserverApplication.dhtServiceComponent.provideReporter();
+        ipFilter = DhtObserverApplication.dhtServiceComponent.provideIpFilter();
         nodeId = configProvider.getNodeId();
         while(!Thread.currentThread().isInterrupted()) {
             try {

@@ -16,7 +16,7 @@ public abstract class DhtEvent {
 
     private int port;
 
-    public DhtEvent(Optional<GeoRecord> geoRecord, @NotNull InetAddress inetAddress, @Range(from = 0, to = 65535) int port) {
+    public DhtEvent(Optional<GeoRecord> geoRecord, @NotNull InetAddress inetAddress, int port) {
         this.geoRecord = geoRecord;
         this.inetAddress = inetAddress;
         this.port = port;

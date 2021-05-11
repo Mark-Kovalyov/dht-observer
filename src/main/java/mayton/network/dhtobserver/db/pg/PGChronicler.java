@@ -18,7 +18,6 @@ public class PGChronicler implements Chronicler {
 
     static Logger logger = LogManager.getLogger(PGChronicler.class);
 
-    @Inject
     public void init() {
         logger.info(secured, "Connect to PG with user = scott, pwd = tiger");
     }

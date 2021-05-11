@@ -5,6 +5,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.yaml.snakeyaml.Yaml;
 
+import javax.annotation.PostConstruct;
+import javax.inject.Inject;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -12,7 +14,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.stream.Collectors;
 
-// TODO: Refactor with @InjectConfig / @BindConfig
 public class YamlConfigProvider implements ConfigProvider{
 
     static Logger logger = LogManager.getLogger(YamlConfigProvider.class);
@@ -21,8 +22,7 @@ public class YamlConfigProvider implements ConfigProvider{
 
     private LinkedHashMap<String, Object> application;
 
-    @Inject
-    public void init() {
+    public YamlConfigProvider() {
         logger.info("init");
         Yaml yaml = new Yaml();
         InputStream inputStream = getClass().getClassLoader().getResourceAsStream("application.yaml");

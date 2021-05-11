@@ -6,8 +6,6 @@ import javax.inject.Singleton;
 import java.util.List;
 import javax.annotation.Nonnull;
 
-@Singleton
-@Component(modules = DhtObserverModule.class)
 public interface Reporter extends AutoCloseable {
 
     @Nonnull
