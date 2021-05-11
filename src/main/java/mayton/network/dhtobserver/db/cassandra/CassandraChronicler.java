@@ -50,7 +50,14 @@ public class CassandraChronicler implements Chronicler {
     public void onPing(@Nonnull Ping command) {
         logger.debug("onPing with command = {}", command.toString());
         try {
-            //sessionAction("UPDATE known_peers SET last_update_time = toTimeStamp(now()) WHERE host = ? AND seq = 1", formatIpV4(fromIpv4toLong(command.getInetAddress())));
+            // CREATE TABLE dhtspace.known_peers (
+            //    seq int,
+            //    last_update_time timestamp,
+            //    host text,
+            //    PRIMARY KEY (seq, last_update_time)
+            //) WITH CLUSTERING ORDER BY (last_update_time ASC)
+
+            sessionAction("UPDATE known_peers SET last_update_time = toTimeStamp(now()) WHERE host = ? AND seq = 1", formatIpV4(fromIpv4toLong(command.getInetAddress())));
             sessionAction("UPDATE port_stats SET hits = hits + 1 WHERE port = ?", command.getPort());
             sessionAction("UPDATE nodes_stats SET pings_requests = pings_requests + 1 WHERE node_id = ?", command.getId());
             if (command.getGeoRecord().isPresent()) {
