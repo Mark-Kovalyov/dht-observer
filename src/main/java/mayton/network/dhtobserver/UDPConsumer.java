@@ -36,8 +36,8 @@ import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static mayton.libs.encoders.binhex.BinHexUtils.binhex;
 import static mayton.network.dhtobserver.Constants.DHT_EVENT_TYPE;
-import static mayton.network.dhtobserver.Utils.binhex;
 import static mayton.network.dhtobserver.Utils.generateRandomToken;
 
 public class UDPConsumer implements Runnable {
