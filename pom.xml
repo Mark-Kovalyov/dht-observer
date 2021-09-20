@@ -11,6 +11,7 @@
 
 	<properties>
 		<java.version>11</java.version>
+        <avro.version>1.10.2</avro.version>
 	</properties>
 
     <profiles>
@@ -60,6 +61,18 @@
     </profiles>
 
     <dependencies>
+
+        <dependency>
+            <groupId>org.apache.avro</groupId>
+            <artifactId>avro</artifactId>
+            <version>${avro.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.avro</groupId>
+            <artifactId>avro-mapred</artifactId>
+            <version>${avro.version}</version>
+        </dependency>
 
         <dependency>
             <groupId>mayton.libs</groupId>
@@ -157,6 +170,12 @@
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-csv</artifactId>
             <version>1.8</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-ext</artifactId>
+            <version>1.7.30</version>
         </dependency>
 
         <!-- Cassandra -->

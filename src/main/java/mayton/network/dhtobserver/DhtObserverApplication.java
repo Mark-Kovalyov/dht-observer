@@ -4,6 +4,7 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import mayton.network.dhtobserver.db.Chronicler;
 import mayton.network.dhtobserver.db.Reporter;
+import mayton.network.dhtobserver.sys.PidWriter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -34,6 +35,7 @@ public class DhtObserverApplication {
         dhtListenerList.forEach(thread -> injector.getInstance(ExecutorServiceProvider.class).executorService().execute(thread));
     }
 
+    @SuppressWarnings("java:S3457")
 	public static void main(String[] args) {
 
         System.setProperty("log4j.configurationFile","log4j2.xml");
@@ -46,6 +48,7 @@ public class DhtObserverApplication {
         for (GarbageCollectorMXBean gcMxBean : gcMxBeans) {
             System.out.printf(" - GC bean name : %s, objectName %s\n", gcMxBean.getName(),gcMxBean.getObjectName());
         }
+        (injector.getInstance(PidWriter.class)).write();
         Thread shutdownHook = new Thread(() -> {
             logger.warn("Shutdown hook called!");
             ExecutorService executorService = injector.getInstance(ExecutorServiceProvider.class).executorService();

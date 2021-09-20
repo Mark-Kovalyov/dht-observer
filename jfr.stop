@@ -1,6 +1,6 @@
 #!/bin/bash -v
 
-if [ -f "dht-observer-app.pid" ]; then
-  PID=$(cat dht-observer-app.pid)
-  jcmd $PID JFR.stop name=1
+if [ -f "bin/dht-observer-app.pid" ]; then
+  PID=$(cat bin/dht-observer-app.pid)
+  jcmd $PID JFR.stop
 fi

@@ -3,19 +3,24 @@ package mayton.network.dhtobserver.geo;
 import com.google.inject.Inject;
 import mayton.network.NetworkUtils;
 import mayton.network.dhtobserver.GeoDb;
+import mayton.network.dhtobserver.Utils;
+import mayton.network.dhtobserver.jfr.GeoEnrichmentEvent;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.profiler.Profiler;
+import org.slf4j.profiler.TimeInstrument;
 
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.*;
 
-public class GeoDbImpl implements GeoDb {
+public class GeoDbCsvImpl implements GeoDb {
 
-    private static Logger logger = LogManager.getLogger(GeoDbImpl.class);
+    private static Logger logger = LoggerFactory.getLogger(GeoRecord.class);
 
     private List<GeoRecord> geoRecords;
 
@@ -23,7 +28,9 @@ public class GeoDbImpl implements GeoDb {
 
     @Inject
     public void init() {
-        logger.info("init from {} with objectId = {}" , csvPath, System.identityHashCode(this));
+        Profiler profiler = new Profiler("GeoDbImpl::init");
+        profiler.setLogger(logger);
+        profiler.start("loading from csv");
         List<GeoRecord> geoRecordsTemp = new ArrayList<>();
         try(CSVParser csvParser = new CSVParser(new FileReader(csvPath), CSVFormat.DEFAULT.withSkipHeaderRecord(true))) {
             Iterator<CSVRecord> i = csvParser.iterator();
@@ -32,18 +39,23 @@ public class GeoDbImpl implements GeoDb {
             while(i.hasNext()) {
                 CSVRecord record = i.next();
                 String country = record.get(2);
+                String region = record.get(3);
                 String city = record.get(4);
                 long begin = NetworkUtils.parseIpV4(record.get(0));
                 long end = NetworkUtils.parseIpV4(record.get(1));
-                geoRecordsTemp.add(new GeoRecord(country, city, begin, end));
+                geoRecordsTemp.add(new GeoRecord(country, city,region, begin, end));
                 cnt++;
             }
-            logger.info("init CSV records loaded. Sorting..");
+            //logger.info("init CSV records loaded. Sorting..");
+            profiler.start("sorting");
             geoRecordsTemp.sort(GeoRecord.beginIpComparator);
-            logger.info("init done, {} records loaded and sorted", cnt);
+            //logger.info("init done, {} records loaded and sorted", cnt);
             geoRecords = Collections.unmodifiableList(geoRecordsTemp);
+            TimeInstrument report = profiler.stop();
+            report.log();
+            //saveToAvro(geoRecords);
         } catch (NumberFormatException | IOException ex) {
-            logger.error(ex);
+            logger.error("Exception GeoDbImpl", ex);
         }
     }
 
@@ -74,7 +86,11 @@ public class GeoDbImpl implements GeoDb {
     }
 
     public Optional<GeoRecord> findFirst(long ipv4) {
+        GeoEnrichmentEvent geoEnrichmentEvent = new GeoEnrichmentEvent();
+        geoEnrichmentEvent.begin();
         Optional<GeoRecord> result = findFirstStuped(ipv4, geoRecords);
+        geoEnrichmentEvent.ip = NetworkUtils.formatIpV4(ipv4);
+        geoEnrichmentEvent.commit();
         return result;
     }
 

@@ -1,6 +1,6 @@
 package mayton.network.dhtobserver;
 
-import mayton.network.dhtobserver.geo.GeoDbImpl;
+import mayton.network.dhtobserver.geo.GeoDbCsvImpl;
 import org.openjdk.jmh.annotations.*;
 
 import java.util.Random;
@@ -16,8 +16,8 @@ public class GeoIpComponentBenchmark {
 
     @Setup(value = Level.Iteration)
     public void setup() {
-        geoDb = new GeoDbImpl();
-        ((GeoDbImpl)geoDb).init();
+        geoDb = new GeoDbCsvImpl();
+        ((GeoDbCsvImpl)geoDb).init();
     }
 
     @Benchmark

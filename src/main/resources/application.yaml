@@ -1,6 +1,7 @@
 application :
   peer_id : "8573195880de48268c84cd58bcc5a19b"
   listeners:
+    # 16680 49001 43567 4665 4672 51413 46434 48529
     - { port : 16680, shortCode : "VZ1" }
     - { port : 49001, shortCode : "VZ2" }
     - { port : 43567, shortCode : "VZ3" }
@@ -13,10 +14,10 @@ application :
     - { port : 48529, shortCode : "TR3" }
 
 geoDb:
-  csvPath : "/storage/db/geo/maxmind/2010-10.MaxMind GeoIP City CSV Format/GeoIP-139_20101001/GeoIPCity.utf-8.csv"
+  csvPath : "/bigdata/geo/maxmind/2010-10.MaxMind GeoIP City CSV Format/GeoIP-139_20101001/GeoIPCity.utf-8.csv"
 
 ipFilterEmule:
-  guardingPath : "/storage/db/amule/guarding.p2p"
+  guardingPath : "/bigdata/db/amule/guarding.p2p"
 
 igniteChronicler :
   hostPort : "127.0.0.1:8080"

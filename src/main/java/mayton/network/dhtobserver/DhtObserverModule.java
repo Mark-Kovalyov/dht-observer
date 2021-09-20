@@ -10,8 +10,10 @@ import mayton.network.dhtobserver.db.cassandra.CassandraChronicler;
 import mayton.network.dhtobserver.db.cassandra.CassandraReporter;
 import mayton.network.dhtobserver.db.ignite.IgniteChronicler;
 import mayton.network.dhtobserver.db.pg.PGChronicler;
-import mayton.network.dhtobserver.geo.GeoDbImpl;
+import mayton.network.dhtobserver.geo.GeoDbCsvImpl;
 import mayton.network.dhtobserver.security.IpFilterEmule;
+import mayton.network.dhtobserver.sys.PidWriter;
+import mayton.network.dhtobserver.sys.PidWriterLinuxImpl;
 
 public class DhtObserverModule extends AbstractModule {
 
@@ -37,7 +39,7 @@ public class DhtObserverModule extends AbstractModule {
                 .in(Scopes.SINGLETON);
 
         bind(GeoDb.class)
-                .to(GeoDbImpl.class)
+                .to(GeoDbCsvImpl.class)
                 .in(Scopes.SINGLETON);
 
         bind(Reporter.class)
@@ -53,5 +55,7 @@ public class DhtObserverModule extends AbstractModule {
                 .in(Scopes.SINGLETON);
 
         bind(ConfigProvider.class).to(YamlConfigProvider.class).in(Scopes.SINGLETON);
+
+        bind(PidWriter.class).to(PidWriterLinuxImpl.class).in(Scopes.SINGLETON);
     }
 }

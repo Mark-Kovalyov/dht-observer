@@ -12,7 +12,7 @@
                 filePattern="/bigdata/dht-observer/logs/application.%d{yyyy-MM-dd-HH}.log.gz"
                 ignoreExceptions="true">
             <PatternLayout>
-                <Pattern>%d{yyyy-MM-dd HH:mm:ss} [%-5p] %-3tid : %c{1} %m%n</Pattern>
+                <Pattern>%d{ISO8601} [%-5p] %-3tid : %c{1} %m%n</Pattern>
             </PatternLayout>
             <Policies>
                 <TimeBasedTriggeringPolicy interval="1"/>
@@ -27,18 +27,18 @@
             </PatternLayout>
         </File-->
 
-        <File name="DhtListenersFileAppender" fileName="./logs/dht-listeners.log" append="false">
+        <File name="DhtListenersFileAppender" fileName="/bigdata/dht-observer/logs/dht-listeners.log" append="false">
             <PatternLayout>
-                <Pattern>%d{yyyy-MM-dd HH:mm:ss} [%-5p] %-3tid : %c{1} %m%n</Pattern>
+                <Pattern>%d{ISO8601} [%-5p] %-3tid : %c{1} %m%n</Pattern>
             </PatternLayout>
         </File>
 
         <Routing name="DhtListenersRoutingAppender">
             <Routes pattern="${ctx:shortCode}">
                 <Route>
-                    <File name="DhtListenersFileAppender" fileName="./logs/dht-listeners-${ctx:shortCode}.log" append="false">
+                    <File name="DhtListenersFileAppender" fileName="/bigdata/dht-observer/logs/dht-listeners-${ctx:shortCode}.log" append="false">
                         <PatternLayout>
-                            <Pattern>%d{yyyy-MM-dd HH:mm:ss} [%-5p] %-3tid : %c{1} %m%n</Pattern>
+                            <Pattern>%d{ISO8601} [%-5p] %-3tid : %c{1} %m%n</Pattern>
                         </PatternLayout>
                     </File>
                 </Route>

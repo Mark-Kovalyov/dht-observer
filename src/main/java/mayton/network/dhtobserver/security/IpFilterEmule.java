@@ -3,6 +3,7 @@ package mayton.network.dhtobserver.security;
 import com.google.inject.Inject;
 import mayton.network.NetworkUtils;
 import mayton.network.dhtobserver.db.IpFilter;
+import mayton.network.dhtobserver.jfr.SecurityCheckEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Range;
@@ -28,7 +29,7 @@ public class IpFilterEmule implements IpFilter {
 
     private List<BannedIpRange> ipSecurityEntities = new ArrayList<>();
 
-    private String guardingPath = "/storage/db/amule/guarding.p2p";
+    private String guardingPath = "/bigdata/db/amule/guarding.p2p";
 
     @Inject
     public void init() {
@@ -50,12 +51,18 @@ public class IpFilterEmule implements IpFilter {
     @Override
     public Optional<BannedIpRange> inRange(@Range(from = 0, to = Integer.MAX_VALUE) long ipv4) {
         int cnt = 0;
+        SecurityCheckEvent securityCheckEvent = new SecurityCheckEvent();
+        securityCheckEvent.ip = NetworkUtils.formatIpV4(ipv4);
         for(BannedIpRange bannedIpRange : ipSecurityEntities) {
             if (ipv4 >= bannedIpRange.beginIp && ipv4 <= bannedIpRange.endIp) {
+                securityCheckEvent.banned = true;
+                securityCheckEvent.commit();
                 return Optional.of(bannedIpRange);
             }
             cnt++;
         }
+        securityCheckEvent.banned = false;
+        securityCheckEvent.commit();
         return Optional.empty();
     }
 }

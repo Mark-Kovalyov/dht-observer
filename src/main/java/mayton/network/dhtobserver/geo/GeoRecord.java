@@ -16,16 +16,20 @@ public final class GeoRecord {
 
     public final String city;
 
+    public final String region;
+
     public final long beginIp;
 
     public final long endIp;
 
-    public GeoRecord(String country, String city, long beginIp, long endIp) {
+    public GeoRecord(String country, String city, String region, long beginIp, long endIp) {
         this.country = country;
         this.city = city;
+        this.region = region;
         this.beginIp = beginIp;
         this.endIp = endIp;
     }
+
 
     @Override
     public String toString() {

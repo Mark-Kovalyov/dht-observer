@@ -1,10 +1,9 @@
 package mayton.network.dhtobserver;
 
 import mayton.network.NetworkUtils;
-import mayton.network.dhtobserver.geo.GeoDbImpl;
+import mayton.network.dhtobserver.geo.GeoDbCsvImpl;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Tag;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
@@ -20,8 +19,8 @@ class GeoIpDbTest {
 
     @BeforeAll
     static void beforeAll() {
-        geoDb = new GeoDbImpl();
-        ((GeoDbImpl)geoDb).init();
+        geoDb = new GeoDbCsvImpl();
+        ((GeoDbCsvImpl)geoDb).init();
     }
 
 

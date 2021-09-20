@@ -10,7 +10,7 @@ import mayton.network.dhtobserver.dht.FindNode;
 import mayton.network.dhtobserver.dht.GetPeers;
 import mayton.network.dhtobserver.dht.Ping;
 import mayton.network.dhtobserver.geo.GeoRecord;
-import mayton.network.dhtobserver.jfr.DhtParseEvent;
+import mayton.network.dhtobserver.jfr.DhtDecodePacketEvent;
 import mayton.network.dhtobserver.security.BannedIpRange;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.lang3.Validate;
@@ -91,9 +91,6 @@ public class UDPConsumer implements Runnable {
         while(!Thread.currentThread().isInterrupted()) {
             try {
                 logger.trace("Consume...");
-                DhtParseEvent dhtParseEvent = new DhtParseEvent();
-                dhtParseEvent.shortCode = shortCode;
-                dhtParseEvent.begin();
                 Triple<byte[], InetAddress, Integer> item = udpPackets.take();
                 InetAddress ip = item.getMiddle();
                 logger.trace("Generic UDP IP : {}", ip.toString());
@@ -113,8 +110,6 @@ public class UDPConsumer implements Runnable {
                 } else {
                     logger.warn("IP address {} is non IPv4. Ignored", ip);
                 }
-                dhtParseEvent.end();
-                dhtParseEvent.commit();
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 logger.warn("", e);
@@ -124,10 +119,13 @@ public class UDPConsumer implements Runnable {
 
     @SuppressWarnings("java:S2629")
     void decodeCommand(DatagramPacket packet) {
+        DhtDecodePacketEvent dhtDecodePacketEvent = new DhtDecodePacketEvent();
+        dhtDecodePacketEvent.begin();
         LocalDateTime localDateTime = LocalDateTime.now();
         String localDateTimeString = localDateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd-hh-mm-ss-n"));
         packetsReceived.incrementAndGet();
         byte[] packetData = packet.getData();
+        dhtDecodePacketEvent.ip = String.valueOf(packet.getAddress());
         try{
             BDecoder decoder = new BDecoder();
             Map<String, Object> res = decoder.decode(ByteBuffer.wrap(packetData));
@@ -142,6 +140,7 @@ public class UDPConsumer implements Runnable {
             }
             Optional<Ping> pingCommandOptional = tryToExtractPingCommand(res, packet, geoRecordOptional);
             if (pingCommandOptional.isPresent()) {
+                dhtDecodePacketEvent.command = "ping";
                 MDC.put(DHT_EVENT_TYPE, Ping.class.getName());
                 // ping Query = {"t":"aa", "y":"q", "q":"ping", "a":{"id":"abcdefghij0123456789"}}
                 // bencoded = d1:ad2:id20:abcdefghij0123456789e1:q4:ping1:t2:aa1:y1:qe
@@ -166,12 +165,14 @@ public class UDPConsumer implements Runnable {
             } else {
                 Optional<FindNode> findNodeOptional = tryToExtractFindNode(res, packet, geoRecordOptional);
                 if (findNodeOptional.isPresent()) {
+                    dhtDecodePacketEvent.command = "find";
                     MDC.put(DHT_EVENT_TYPE, FindNode.class.getName());
                     logger.info("Find_node request detected");
                     chronicler.onFindNode(findNodeOptional.get());
                 } else {
                     Optional<GetPeers> getPeersOptional = extractGetPeers(res, packet, geoRecordOptional);
                     if (getPeersOptional.isPresent()) {
+                        dhtDecodePacketEvent.command = "get_peers";
                         byte[] sender_node_id = (byte[]) res.get("id");
                         if (sender_node_id == null) {
                             logger.warn("Hmm.. 'geet_peers' without id?");
@@ -189,18 +190,6 @@ public class UDPConsumer implements Runnable {
 
                             try (DatagramSocket socket = new DatagramSocket()) {
                                 logger.debug("Pong prepare...");
-                                // TODO:Fix
-                                // [WARN ] 21  : dhtlisteners.TR1 !
-                                // java.lang.RuntimeException: unknown object to encode null
-                                //	at the8472.bencode.BEncoder.encodeInternal(BEncoder.java:116) ~[bt-dht-1.9.jar:1.9]
-                                //	at the8472.bencode.BEncoder.lambda$encodeMap$0(BEncoder.java:147) ~[bt-dht-1.9.jar:1.9]
-                                //	at java.util.TreeMap$EntrySpliterator.forEachRemaining(TreeMap.java:2962) ~[?:?]
-                                //	at java.util.stream.ReferencePipeline$Head.forEachOrdered(ReferencePipeline.java:668) ~[?:?]
-                                //	at the8472.bencode.BEncoder.encodeMap(BEncoder.java:145) ~[bt-dht-1.9.jar:1.9]
-                                //	at the8472.bencode.BEncoder.encode(BEncoder.java:37) ~[bt-dht-1.9.jar:1.9]
-                                //	at mayton.network.dhtobserver.UDPConsumer.decodeCommand(UDPConsumer.java:192) [dht-observer.jar:?]
-                                //	at mayton.network.dhtobserver.UDPConsumer.run(UDPConsumer.java:101) [dht-observer.jar:?]
-                                //	at java.lang.Thread.run(Thread.java:834) [?:?]
                                 ByteBuffer sendBuffer2 = encoder.encode(sendMap2, 320);
                                 byte[] sendBytes2 = sendBuffer2.array();
                                 // TODO: Finish
@@ -214,6 +203,7 @@ public class UDPConsumer implements Runnable {
                     } else {
                         Optional<AnnouncePeer> optionalAnnouncePeer = extractAnnounce(res, packet, geoRecordOptional);
                         if (optionalAnnouncePeer.isPresent()) {
+                            dhtDecodePacketEvent.command = "announce_peer";
                             MDC.put(DHT_EVENT_TYPE, AnnouncePeer.class.getName());
                             // announce_peers Query = {"t":"aa", "y":"q", "q":"announce_peer", "a": {"id":"abcdefghij0123456789", "implied_port": 1, "info_hash":"mnopqrstuvwxyz123456", "port": 6881, "token": "aoeusnth"}}
                             // Response = {"t":"aa", "y":"r", "r": {"id":"mnopqrstuvwxyz123456"}}
@@ -250,6 +240,7 @@ public class UDPConsumer implements Runnable {
             }
         } finally {
             MDC.remove(DHT_EVENT_TYPE);
+            dhtDecodePacketEvent.commit();
         }
     }
 
