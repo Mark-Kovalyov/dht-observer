@@ -1,7 +1,6 @@
 package mayton.network.dhtobserver;
 
 import com.github.rholder.retry.*;
-import org.apache.commons.lang3.tuple.Triple;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.ThreadContext;
@@ -19,8 +18,7 @@ public class DhtListener implements Runnable {
 
     private Logger logger;
 
-    // TODO: Consider Disruptor as replacement for BQ
-    private BlockingQueue<Triple<byte[], InetAddress, Integer>> udpPackets;
+    private BlockingQueue<UDPConsumerEntity> udpPackets;
 
     private int port;
 
@@ -87,7 +85,7 @@ public class DhtListener implements Runnable {
                     socket.receive(packet);
                     InetAddress address = packet.getAddress();
                     logger.trace("receive udp packet : {}", packet.getAddress().toString());
-                    udpPackets.put(Triple.of(Arrays.copyOf(buf, buf.length), address, port));
+                    udpPackets.put(new UDPConsumerEntity(Arrays.copyOf(buf, buf.length), address, port));
                 }
                 logger.info("Interrupted!");
             } else {

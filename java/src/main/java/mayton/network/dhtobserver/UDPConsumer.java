@@ -54,7 +54,7 @@ public class UDPConsumer implements Runnable {
 
     private IpFilter ipFilter;
 
-    private BlockingQueue<Triple<byte[], InetAddress, Integer>> udpPackets;
+    private BlockingQueue<UDPConsumerEntity> udpPackets;
 
     private String threadName;
 
@@ -70,7 +70,7 @@ public class UDPConsumer implements Runnable {
 
     private String nodeId;
 
-    public UDPConsumer(BlockingQueue<Triple<byte[], InetAddress, Integer>> udpPackets, String threadName, String shortCode) {
+    public UDPConsumer(BlockingQueue<UDPConsumerEntity> udpPackets, String threadName, String shortCode) {
         this.udpPackets = udpPackets;
         this.threadName = threadName;
         this.shortCode = shortCode;
@@ -91,8 +91,8 @@ public class UDPConsumer implements Runnable {
         while(!Thread.currentThread().isInterrupted()) {
             try {
                 logger.trace("Consume...");
-                Triple<byte[], InetAddress, Integer> item = udpPackets.take();
-                InetAddress ip = item.getMiddle();
+                UDPConsumerEntity item = udpPackets.take();
+                InetAddress ip = item.inetAddress;
                 logger.trace("Generic UDP IP : {}", ip.toString());
                 if (ip instanceof Inet4Address) {
                     logger.trace("IPv4. Analyzing...");
@@ -101,8 +101,8 @@ public class UDPConsumer implements Runnable {
                     Optional<BannedIpRange> bannedIpRange = ipFilter.inRange(NetworkUtils.parseIpV4(ipString));
                     if (bannedIpRange.isEmpty()) {
                         logger.trace("Allowed!");
-                        byte[] buf = item.getLeft();
-                        DatagramPacket packet = new DatagramPacket(buf, buf.length, ip, item.getRight());
+                        byte[] buf = item.data;
+                        DatagramPacket packet = new DatagramPacket(buf, buf.length, ip, item.port);
                         decodeCommand(packet);
                     } else {
                         logger.warn("Banned ipv4 {} detected in {}", ip, bannedIpRange.get());

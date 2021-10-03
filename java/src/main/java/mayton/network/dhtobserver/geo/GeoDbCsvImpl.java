@@ -3,7 +3,6 @@ package mayton.network.dhtobserver.geo;
 import com.google.inject.Inject;
 import mayton.network.NetworkUtils;
 import mayton.network.dhtobserver.GeoDb;
-import mayton.network.dhtobserver.Utils;
 import mayton.network.dhtobserver.jfr.GeoEnrichmentEvent;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
