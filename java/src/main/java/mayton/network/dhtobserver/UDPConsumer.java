@@ -1,6 +1,7 @@
 package mayton.network.dhtobserver;
 
-import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
+import mayton.dht.DhtMapConverter;
+import mayton.dht.MapJsonConverter;
 import mayton.network.NetworkUtils;
 import mayton.network.dhtobserver.db.Chronicler;
 import mayton.network.dhtobserver.db.IpFilter;
@@ -14,22 +15,14 @@ import mayton.network.dhtobserver.jfr.DhtDecodePacketEvent;
 import mayton.network.dhtobserver.security.BannedIpRange;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.lang3.Validate;
-import org.apache.commons.lang3.tuple.Triple;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.ThreadContext;
-
 import org.slf4j.MDC;
-import the8472.bencode.BDecoder;
-import the8472.bencode.BEncoder;
-
 import java.io.*;
 import java.net.DatagramPacket;
-import java.net.DatagramSocket;
 import java.net.Inet4Address;
 import java.net.InetAddress;
-import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -38,7 +31,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static mayton.libs.encoders.binhex.BinHexUtils.binhex;
 import static mayton.network.dhtobserver.Constants.DHT_EVENT_TYPE;
-import static mayton.network.dhtobserver.Utils.generateRandomToken;
 
 public class UDPConsumer implements Runnable {
 
@@ -63,8 +55,6 @@ public class UDPConsumer implements Runnable {
     private String destPath = "/bigdata/dht-observer/out";
 
     private Random random = new Random();
-
-    private BEncoder encoder = new BEncoder();
 
     private ConfigProvider configProvider;
 
@@ -119,6 +109,7 @@ public class UDPConsumer implements Runnable {
 
     @SuppressWarnings("java:S2629")
     void decodeCommand(DatagramPacket packet) {
+        MapJsonConverter converter = new MapJsonConverter();
         DhtDecodePacketEvent dhtDecodePacketEvent = new DhtDecodePacketEvent();
         dhtDecodePacketEvent.begin();
         LocalDateTime localDateTime = LocalDateTime.now();
@@ -126,118 +117,121 @@ public class UDPConsumer implements Runnable {
         packetsReceived.incrementAndGet();
         byte[] packetData = packet.getData();
         dhtDecodePacketEvent.ip = String.valueOf(packet.getAddress());
+        DhtMapConverter dhtMapConverter = new DhtMapConverter();
         try{
-            BDecoder decoder = new BDecoder();
-            Map<String, Object> res = decoder.decode(ByteBuffer.wrap(packetData));
+            //BDecoder decoder = new BDecoder();
+            //Map<String, Object> res = decoder.decode(ByteBuffer.wrap(packetData));
+            Optional<Map<String, Object>> optionalRes = dhtMapConverter.convert(packet);
             logger.info("{} :: Received DHT UDP packet : from {}:{}",
                     threadName,
                     packet.getAddress(),
                     packet.getPort()
             );
+
             Optional<GeoRecord> geoRecordOptional = geoDb.findFirst(NetworkUtils.fromIpv4toLong(packet.getAddress()));
             if (geoRecordOptional.isEmpty()) {
                 logger.warn("Hmm... unable to recognize GeoIp binding for ip = {}, long = {}", packet.getAddress(), NetworkUtils.fromIpv4toLong(packet.getAddress()));
             }
-            Optional<Ping> pingCommandOptional = tryToExtractPingCommand(res, packet, geoRecordOptional);
-            if (pingCommandOptional.isPresent()) {
-                dhtDecodePacketEvent.command = "ping";
-                MDC.put(DHT_EVENT_TYPE, Ping.class.getName());
-                // ping Query = {"t":"aa", "y":"q", "q":"ping", "a":{"id":"abcdefghij0123456789"}}
-                // bencoded = d1:ad2:id20:abcdefghij0123456789e1:q4:ping1:t2:aa1:y1:qe
-                //
-                // Response = {"t":"aa", "y":"r", "r": {"id":"mnopqrstuvwxyz123456"}}
-                // bencoded = d1:rd2:id20:mnopqrstuvwxyz123456e1:t2:aa1:y1:re
-                logger.info("Ping detected");
-                try(DatagramSocket socket = new DatagramSocket()) {
+            if (optionalRes.isPresent()) {
+                Map<String, Object> res = optionalRes.get();
+                Optional<Ping> pingCommandOptional = tryToExtractPingCommand(res, packet, geoRecordOptional);
+                if (pingCommandOptional.isPresent()) {
+                    dhtDecodePacketEvent.command = "ping";
+                    MDC.put(DHT_EVENT_TYPE, Ping.class.getName());
+                    // ping Query = {"t":"aa", "y":"q", "q":"ping", "a":{"id":"abcdefghij0123456789"}}
+                    // bencoded = d1:ad2:id20:abcdefghij0123456789e1:q4:ping1:t2:aa1:y1:qe
+                    //
+                    // Response = {"t":"aa", "y":"r", "r": {"id":"mnopqrstuvwxyz123456"}}
+                    // bencoded = d1:rd2:id20:mnopqrstuvwxyz123456e1:t2:aa1:y1:re
+                    logger.info("Ping detected");
+                    /*try (DatagramSocket socket = new DatagramSocket()) {
 
-                    Map<String, Object> sendMap = new TreeMap<>();
+                        Map<String, Object> sendMap = new TreeMap<>();
                         sendMap.put("r", Collections.singletonMap("id", nodeId));
                         sendMap.put("t", "aa".getBytes(StandardCharsets.UTF_8));
                         sendMap.put("y", "r".getBytes(StandardCharsets.UTF_8));
 
-                    // TODO: Refactor code duplications
-                    ByteBuffer sendBuffer = encoder.encode(sendMap, 320);
-                    byte[] sendBytes = sendBuffer.array();
-                    socket.send(new DatagramPacket(sendBytes, sendBytes.length, packet.getAddress(), packet.getPort()));
-                    logger.debug("Pong : {}", Utils.dumpBencodedMapWithJackson(sendMap, new DefaultPrettyPrinter()));
-                }
-                chronicler.onPing(pingCommandOptional.get());
-            } else {
-                Optional<FindNode> findNodeOptional = tryToExtractFindNode(res, packet, geoRecordOptional);
-                if (findNodeOptional.isPresent()) {
-                    dhtDecodePacketEvent.command = "find";
-                    MDC.put(DHT_EVENT_TYPE, FindNode.class.getName());
-                    logger.info("Find_node request detected");
-                    chronicler.onFindNode(findNodeOptional.get());
+                        // TODO: Refactor code duplications
+                        ByteBuffer sendBuffer = encoder.encode(sendMap, 320);
+                        byte[] sendBytes = sendBuffer.array();
+                        socket.send(new DatagramPacket(sendBytes, sendBytes.length, packet.getAddress(), packet.getPort()));
+                        logger.debug("Pong : {}", converter.convertPretty(sendMap).get());
+                    }*/
+                    chronicler.onPing(pingCommandOptional.get());
                 } else {
-                    Optional<GetPeers> getPeersOptional = extractGetPeers(res, packet, geoRecordOptional);
-                    if (getPeersOptional.isPresent()) {
-                        dhtDecodePacketEvent.command = "get_peers";
-                        byte[] sender_node_id = (byte[]) res.get("id");
-                        if (sender_node_id == null) {
-                            logger.warn("Hmm.. 'geet_peers' without id?");
-                        } else {
-                            MDC.put(DHT_EVENT_TYPE, GetPeers.class.getName());
-                            String token = generateRandomToken();
-                            Validate.notNull(reporter.knownPeers(), "Known peers must be not null");
-                            chronicler.onGetPeers(getPeersOptional.get());
-                            // response: {"id" : "<queried nodes id>", "token" :"<opaque write token>", "values" : ["<peer 1 info string>", "<peer 2 info string>"]}
-                            // or: {"id" : "<queried nodes id>", "token" :"<opaque write token>", "nodes" : "<compact node info>"}
-                            Map<String, Object> sendMap2 = new TreeMap<>();
-                            sendMap2.put("id", sender_node_id);
-                            sendMap2.put("token", token);
-                            sendMap2.put("values", reporter.knownPeers());
-
-                            try (DatagramSocket socket = new DatagramSocket()) {
-                                logger.debug("Pong prepare...");
-                                ByteBuffer sendBuffer2 = encoder.encode(sendMap2, 320);
-                                byte[] sendBytes2 = sendBuffer2.array();
-                                // TODO: Finish
-                                Validate.notNull(sendBytes2, "Send bytes must be non null");
-                                Validate.notNull(packet, "UDP packet is empty");
-                                Validate.notNull(packet.getAddress(), "Adress of UDP packet is empty");
-                                socket.send(new DatagramPacket(sendBytes2, sendBytes2.length, packet.getAddress(), packet.getPort()));
-                                logger.debug("Pong : {}", Utils.dumpBencodedMapWithJackson(sendMap2, new DefaultPrettyPrinter()));
-                            }
-                        }
+                    Optional<FindNode> findNodeOptional = tryToExtractFindNode(res, packet, geoRecordOptional);
+                    if (findNodeOptional.isPresent()) {
+                        dhtDecodePacketEvent.command = "find";
+                        MDC.put(DHT_EVENT_TYPE, FindNode.class.getName());
+                        logger.info("Find_node request detected");
+                        chronicler.onFindNode(findNodeOptional.get());
                     } else {
-                        Optional<AnnouncePeer> optionalAnnouncePeer = extractAnnounce(res, packet, geoRecordOptional);
-                        if (optionalAnnouncePeer.isPresent()) {
-                            dhtDecodePacketEvent.command = "announce_peer";
-                            MDC.put(DHT_EVENT_TYPE, AnnouncePeer.class.getName());
-                            // announce_peers Query = {"t":"aa", "y":"q", "q":"announce_peer", "a": {"id":"abcdefghij0123456789", "implied_port": 1, "info_hash":"mnopqrstuvwxyz123456", "port": 6881, "token": "aoeusnth"}}
-                            // Response = {"t":"aa", "y":"r", "r": {"id":"mnopqrstuvwxyz123456"}}
-                            // TODO: Refactor
-                            Map<String, Object> sendMap = new TreeMap<>();
+                        Optional<GetPeers> getPeersOptional = extractGetPeers(res, packet, geoRecordOptional);
+                        if (getPeersOptional.isPresent()) {
+                            dhtDecodePacketEvent.command = "get_peers";
+                            byte[] sender_node_id = (byte[]) res.get("id");
+                            if (sender_node_id == null) {
+                                logger.warn("Hmm.. 'geet_peers' without id?");
+                            } else {
+                                MDC.put(DHT_EVENT_TYPE, GetPeers.class.getName());
+                                String token = UUID.randomUUID().toString(); //generateRandomToken();
+                                Validate.notNull(reporter.knownPeers(), "Known peers must be not null");
+                                chronicler.onGetPeers(getPeersOptional.get());
+                                // response: {"id" : "<queried nodes id>", "token" :"<opaque write token>", "values" : ["<peer 1 info string>", "<peer 2 info string>"]}
+                                // or: {"id" : "<queried nodes id>", "token" :"<opaque write token>", "nodes" : "<compact node info>"}
+                                /*Map<String, Object> sendMap2 = new TreeMap<>();
+                                sendMap2.put("id", sender_node_id);
+                                sendMap2.put("token", token);
+                                sendMap2.put("values", reporter.knownPeers());
+                                try (DatagramSocket socket = new DatagramSocket()) {
+                                    logger.debug("Pong prepare...");
+                                    ByteBuffer sendBuffer2 = encoder.encode(sendMap2, 320);
+                                    byte[] sendBytes2 = sendBuffer2.array();
+                                    // TODO: Finish
+                                    Validate.notNull(sendBytes2, "Send bytes must be non null");
+                                    Validate.notNull(packet, "UDP packet is empty");
+                                    Validate.notNull(packet.getAddress(), "Adress of UDP packet is empty");
+                                    socket.send(new DatagramPacket(sendBytes2, sendBytes2.length, packet.getAddress(), packet.getPort()));
+                                    logger.debug("Pong : {}", converter.convertPretty(sendMap2).get());
+                                }*/
+                            }
+                        } else {
+                            Optional<AnnouncePeer> optionalAnnouncePeer = extractAnnounce(res, packet, geoRecordOptional);
+                            if (optionalAnnouncePeer.isPresent()) {
+                                dhtDecodePacketEvent.command = "announce_peer";
+                                MDC.put(DHT_EVENT_TYPE, AnnouncePeer.class.getName());
+                                // announce_peers Query = {"t":"aa", "y":"q", "q":"announce_peer", "a": {"id":"abcdefghij0123456789", "implied_port": 1, "info_hash":"mnopqrstuvwxyz123456", "port": 6881, "token": "aoeusnth"}}
+                                // Response = {"t":"aa", "y":"r", "r": {"id":"mnopqrstuvwxyz123456"}}
+                                // TODO: Refactor
+                                /*Map<String, Object> sendMap = new TreeMap<>();
                                 sendMap.put("t", "aa".getBytes(StandardCharsets.UTF_8));
                                 sendMap.put("y", "r".getBytes(StandardCharsets.UTF_8));
-                                sendMap.put("r", "");
-                            chronicler.onAnnouncePeer(optionalAnnouncePeer.get());
-                        } else {
-                            logger.warn("Unknown message type : {}", Utils.dumpBencodedMapWithJackson(res, new DefaultPrettyPrinter()));
+                                sendMap.put("r", "");*/
+                                chronicler.onAnnouncePeer(optionalAnnouncePeer.get());
+                            } else {
+                                logger.warn("Unknown message type : {}", converter.convertPretty(res));
+                            }
                         }
                     }
+
                 }
-
+                logger.info("OK! with data: {}", binhex(packetData, true));
+                String json = converter.convertPretty(res).get();
+                logger.info("with structure : {}", json);
+                try(OutputStream fos = new FileOutputStream(        destPath + "/decoded/udp-packet-" + localDateTimeString + ".dat");
+                    PrintWriter pw = new PrintWriter(new FileWriter(destPath + "/decoded/udp-packet-" + localDateTimeString + ".json"))) {
+                    fos.write(packet.getData());
+                    pw.write(json);
+                }
+            } else {
+                try (OutputStream fos = new FileOutputStream(destPath + "/non-decoded/udp-packet-" + localDateTimeString + ".dat")) {
+                    fos.write(packet.getData());
+                } catch (IOException e) {
+                    logger.warn("!", e);
+                }
             }
-
-            logger.info("OK! with data: {}", binhex(packetData, true));
-            String json = Utils.dumpBencodedMapWithJackson(res, new DefaultPrettyPrinter());
-            logger.info("with structure : {}", json);
-
-            try(OutputStream fos = new FileOutputStream(        destPath + "/decoded/udp-packet-" + localDateTimeString + ".dat");
-                PrintWriter pw = new PrintWriter(new FileWriter(destPath + "/decoded/udp-packet-" + localDateTimeString + ".json"))) {
-                fos.write(packet.getData());
-                pw.write(json);
-            }
-
         } catch (Exception ex) {
-            logger.warn("!", ex);
-            try (OutputStream fos = new FileOutputStream(destPath + "/non-decoded/udp-packet-" + localDateTimeString + ".dat")) {
-                fos.write(packet.getData());
-            } catch (IOException e) {
-                logger.warn("!", e);
-            }
+            logger.error("!", ex);
         } finally {
             MDC.remove(DHT_EVENT_TYPE);
             dhtDecodePacketEvent.commit();

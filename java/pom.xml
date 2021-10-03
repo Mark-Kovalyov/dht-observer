@@ -63,7 +63,7 @@
     <dependencies>
 
         <dependency>
-            <groupId>mayton.dht</groupId>
+            <groupId>mayton.lib</groupId>
             <artifactId>dht-support</artifactId>
             <version>1.0-SNAPSHOT</version>
         </dependency>
@@ -119,18 +119,6 @@
         </dependency>
 
         <!-- DHT-torrent support libraries -->
-
-        <dependency>
-            <groupId>com.github.atomashpolskiy</groupId>
-            <artifactId>bt-bencoding</artifactId>
-            <version>1.9</version>
-        </dependency>
-
-        <dependency>
-            <groupId>com.github.atomashpolskiy</groupId>
-            <artifactId>bt-dht</artifactId>
-            <version>1.9</version>
-        </dependency>
 
         <dependency>
             <groupId>commons-io</groupId>

@@ -1,31 +1,13 @@
 package mayton.network.dhtobserver;
 
-import org.apache.commons.codec.binary.Hex;
-import org.apache.commons.io.IOUtils;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-import the8472.bencode.BDecoder;
 
-import java.nio.ByteBuffer;
-import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class TsharkAnalyzeTest {
 
-    @Test
-    @Disabled
-    public void test() throws Exception {
-        String[] hexs = {
-                ""
-        };
 
-        for(String hex : hexs) {
-            BDecoder decoder = new BDecoder();
-            Map<String, Object> res = decoder.decode(ByteBuffer.wrap(Hex.decodeHex(hex)));
-            System.out.println(Utils.dumpBencodedMapWithJackson(res));
-        }
-    }
 
     @Test
     public void test2() {
