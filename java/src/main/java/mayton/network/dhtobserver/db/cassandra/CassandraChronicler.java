@@ -6,7 +6,6 @@ import com.datastax.oss.driver.api.core.cql.ResultSet;
 
 import com.google.inject.Inject;
 import mayton.network.dhtobserver.db.Chronicler;
-import mayton.network.dhtobserver.db.UDPReceiver;
 import mayton.network.dhtobserver.dht.AnnouncePeer;
 import mayton.network.dhtobserver.dht.FindNode;
 import mayton.network.dhtobserver.dht.GetPeers;
@@ -20,6 +19,7 @@ import javax.annotation.Nonnull;
 import static mayton.network.NetworkUtils.formatIpV4;
 import static mayton.network.NetworkUtils.fromIpv4toLong;
 
+@SuppressWarnings("java:S1192")
 public class CassandraChronicler implements Chronicler {
 
     private static Logger logger = LoggerFactory.getLogger(CassandraChronicler.class);
@@ -28,9 +28,9 @@ public class CassandraChronicler implements Chronicler {
 
     private String keyspace = "dhtspace";
 
-    private int NODE_HOST_TTL = 7 * 24 * 60 * 60;   // 7 days to keep host info
-    private int INFO_HASH_TTL = 1 * 60 * 60;        // 1 hour to keep tokens
-    private int ANNOUNCE_TTL  = 30 * 24 * 60 * 60;  // 30 days
+    private static final int NODE_HOST_TTL = 7 * 24 * 60 * 60;   // 7 days to keep host info
+    private static final int INFO_HASH_TTL = 1 * 60 * 60;        // 1 hour to keep tokens
+    private static final int ANNOUNCE_TTL  = 30 * 24 * 60 * 60;  // 30 days
 
     @Inject
     public void init() {
@@ -48,15 +48,8 @@ public class CassandraChronicler implements Chronicler {
 
     @Override
     public void onPing(@Nonnull Ping command) {
-        logger.debug("onPing with command = {}", command.toString());
+        logger.debug("onPing with command = {}", command);
         try {
-            // CREATE TABLE dhtspace.known_peers (
-            //    seq int,
-            //    last_update_time timestamp,
-            //    host text,
-            //    PRIMARY KEY (seq, last_update_time)
-            //) WITH CLUSTERING ORDER BY (last_update_time ASC)
-
             sessionAction("UPDATE known_peers SET last_update_time = toTimeStamp(now()) WHERE host = ? AND seq = 1", formatIpV4(fromIpv4toLong(command.getInetAddress())));
             sessionAction("UPDATE port_stats SET hits = hits + 1 WHERE port = ?", command.getPort());
             sessionAction("UPDATE nodes_stats SET pings_requests = pings_requests + 1 WHERE node_id = ?", command.getId());
@@ -69,8 +62,8 @@ public class CassandraChronicler implements Chronicler {
                                 " last_update_time = toTimeStamp(now()) " +
                                 " WHERE node_id = ?",
                         command.getHostAndPort(),
-                        command.getGeoRecord().get().country,
-                        command.getGeoRecord().get().city,
+                        command.getGeoRecord().orElseThrow().country,
+                        command.getGeoRecord().orElseThrow().city,
                         command.getId());
             } else {
                 sessionAction(
@@ -83,15 +76,15 @@ public class CassandraChronicler implements Chronicler {
             }
 
         } catch (Exception ex) {
-            logger.error("!", ex);
+            logger.error("onPing error", ex);
         }
     }
 
     @Override
     public void onFindNode(FindNode command) {
-        logger.debug("onFindNode with command = {}", command.toString());
+        logger.debug("onFindNode with command = {}", command);
         try {
-            //sessionAction("UPDATE known_peers SET last_update_time = toTimeStamp(now()) WHERE host = ? AND seq = 1", formatIpV4(fromIpv4toLong(command.getInetAddress())));
+            sessionAction("UPDATE known_peers SET last_update_time = toTimeStamp(now()) WHERE host = ? AND seq = 1", formatIpV4(fromIpv4toLong(command.getInetAddress())));
             sessionAction("UPDATE port_stats SET hits = hits + 1 WHERE port = ?", command.getPort());
             sessionAction("UPDATE nodes_stats SET find_nodes_requests = find_nodes_requests + 1 WHERE node_id = ?", command.getId());
             sessionAction("UPDATE targets SET x = 1 WHERE target_id = ? and node_id = ?", command.getTarget(), command.getId());
@@ -104,8 +97,8 @@ public class CassandraChronicler implements Chronicler {
                                 " last_city    = ? " +
                                 " WHERE node_id = ?",
                         command.getHostAndPort(),
-                        command.getGeoRecord().get().country,
-                        command.getGeoRecord().get().city,
+                        command.getGeoRecord().orElseThrow().country,
+                        command.getGeoRecord().orElseThrow().city,
                         command.getId());
             } else {
                 sessionAction(
@@ -123,22 +116,9 @@ public class CassandraChronicler implements Chronicler {
 
     @Override
     public void onGetPeers(GetPeers command) {
-        // [ERROR] 22  : mayton.network.dhtobserver.db.cassandra.CassandraChronicler !
-        // com.datastax.oss.driver.api.core.servererrors.InvalidQueryException: PRIMARY KEY part last_update_time found in SET part
-        //	at com.datastax.oss.driver.api.core.servererrors.InvalidQueryException.copy(InvalidQueryException.java:48) ~[java-driver-core-4.10.0.jar:?]
-        //	at com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures.getUninterruptibly(CompletableFutures.java:149) ~[java-driver-core-4.10.0.jar:?]
-        //	at com.datastax.oss.driver.internal.core.cql.CqlPrepareSyncProcessor.process(CqlPrepareSyncProcessor.java:59) ~[java-driver-core-4.10.0.jar:?]
-        //	at com.datastax.oss.driver.internal.core.cql.CqlPrepareSyncProcessor.process(CqlPrepareSyncProcessor.java:31) ~[java-driver-core-4.10.0.jar:?]
-        //	at com.datastax.oss.driver.internal.core.session.DefaultSession.execute(DefaultSession.java:230) ~[java-driver-core-4.10.0.jar:?]
-        //	at com.datastax.oss.driver.api.core.cql.SyncCqlSession.prepare(SyncCqlSession.java:224) ~[java-driver-core-4.10.0.jar:?]
-        //	at mayton.network.dhtobserver.db.cassandra.CassandraChronicler.sessionAction(CassandraChronicler.java:41) ~[dht-observer.jar:?]
-        //	at mayton.network.dhtobserver.db.cassandra.CassandraChronicler.onGetPeers(CassandraChronicler.java:121) [dht-observer.jar:?]
-        //	at mayton.network.dhtobserver.UDPConsumer.decodeCommand(UDPConsumer.java:168) [dht-observer.jar:?]
-        //	at mayton.network.dhtobserver.UDPConsumer.run(UDPConsumer.java:101) [dht-observer.jar:?]
-        //	at java.lang.Thread.run(Thread.java:834) [?:?]
-        logger.debug("onGetPeers with command = {}", command.toString());
+        logger.debug("onGetPeers with command = {}", command);
         try {
-            //sessionAction("UPDATE known_peers SET last_update_time = toTimeStamp(now()) WHERE host = ? AND seq = 1", formatIpV4(fromIpv4toLong(command.getInetAddress())));
+            sessionAction("UPDATE known_peers SET last_update_time = toTimeStamp(now()) WHERE host = ? AND seq = 1", formatIpV4(fromIpv4toLong(command.getInetAddress())));
             sessionAction("UPDATE port_stats SET hits = hits + 1 WHERE port = ?", command.getPort());
             sessionAction("UPDATE info_hash USING TTL " + INFO_HASH_TTL + " SET info_hash = ? WHERE node_id = ?", command.getInfoHash(), command.getId());
             sessionAction("UPDATE nodes_stats SET get_peeers_requests = get_peeers_requests + 1 WHERE node_id = ?", command.getId());
@@ -151,8 +131,8 @@ public class CassandraChronicler implements Chronicler {
                                 " last_city    = ? " +
                                 " WHERE node_id = ?",
                         command.getHostAndPort(),
-                        command.getGeoRecord().get().country,
-                        command.getGeoRecord().get().city,
+                        command.getGeoRecord().orElseThrow().country,
+                        command.getGeoRecord().orElseThrow().city,
                         command.getId());
             } else {
                 sessionAction(
@@ -170,9 +150,9 @@ public class CassandraChronicler implements Chronicler {
 
     @Override
     public void onAnnouncePeer(@NotNull AnnouncePeer command) {
-        logger.debug("onAnnouncePeer with command = {}", command.toString());
+        logger.debug("onAnnouncePeer with command = {}", command);
         try {
-            //sessionAction("UPDATE known_peers SET last_update_time = toTimeStamp(now()) WHERE host = ? AND seq = 1", formatIpV4(fromIpv4toLong(command.getInetAddress())));
+            sessionAction("UPDATE known_peers SET last_update_time = toTimeStamp(now()) WHERE host = ? AND seq = 1", formatIpV4(fromIpv4toLong(command.getInetAddress())));
             sessionAction("UPDATE port_stats SET hits = hits + 1 WHERE port = ?", command.getPort());
             sessionAction("UPDATE announces USING TTL " + ANNOUNCE_TTL + " SET" +
                             " node_id = ?, " +

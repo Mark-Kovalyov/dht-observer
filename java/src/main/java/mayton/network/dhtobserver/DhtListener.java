@@ -4,6 +4,7 @@ import com.github.rholder.retry.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.ThreadContext;
+
 import java.io.IOException;
 import java.net.BindException;
 import java.net.DatagramPacket;
@@ -41,7 +42,7 @@ public class DhtListener implements Runnable {
     }
 
 
-    class DatagramSocketCallable implements Callable<DatagramSocket> {
+    static class DatagramSocketCallable implements Callable<DatagramSocket> {
 
         private int port;
 
@@ -49,6 +50,7 @@ public class DhtListener implements Runnable {
             this.port = port;
         }
 
+        @SuppressWarnings("java:S2095")
         public DatagramSocket call() throws Exception {
             DatagramSocket socket = new DatagramSocket(port);
             socket.setReuseAddress(true);
@@ -71,7 +73,8 @@ public class DhtListener implements Runnable {
                     .withRetryListener(new RetryListener() {
                         @Override
                         public <V> void onRetry(Attempt<V> attempt) {
-                            logger.warn("Attempt number : {}, delay since first attempt : {} ms", attempt.getAttemptNumber(), attempt.getDelaySinceFirstAttempt());
+                            logger.warn("Attempt number : {}, delay since first attempt : {} ms",
+                                    attempt.getAttemptNumber(), attempt.getDelaySinceFirstAttempt());
                         }
                     })
                     .build();
@@ -84,7 +87,8 @@ public class DhtListener implements Runnable {
                     DatagramPacket packet = new DatagramPacket(buf, buf.length);
                     socket.receive(packet);
                     InetAddress address = packet.getAddress();
-                    logger.trace("receive udp packet : {}", packet.getAddress().toString());
+                    if (logger.isTraceEnabled())
+                        logger.trace("receive udp packet : {}", packet.getAddress());
                     udpPackets.put(new UDPConsumerEntity(Arrays.copyOf(buf, buf.length), address, port));
                 }
                 logger.info("Interrupted!");

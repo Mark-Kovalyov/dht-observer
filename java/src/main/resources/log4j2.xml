@@ -53,24 +53,24 @@
 
         <!-- Classic loggers-appenders -->
 
-        <Root level="trace">
-            <AppenderRef ref="Console"             level="trace"/>
-            <AppenderRef ref="RollingFileAppender" level="trace"/>
+        <Root level="info">
+            <AppenderRef ref="Console"             level="info"/>
+            <AppenderRef ref="RollingFileAppender" level="info"/>
         </Root>
 
         <Logger name="com.datastax" level="info" additivity="false">
-            <AppenderRef ref="Console"             level="trace"/>
-            <AppenderRef ref="RollingFileAppender" level="trace"/>
+            <AppenderRef ref="Console"             level="info"/>
+            <AppenderRef ref="RollingFileAppender" level="info"/>
         </Logger>
 
         <Logger name="io.netty" level="info" additivity="false">
-            <AppenderRef ref="Console"             level="trace"/>
-            <AppenderRef ref="RollingFileAppender" level="trace"/>
+            <AppenderRef ref="Console"             level="info"/>
+            <AppenderRef ref="RollingFileAppender" level="info"/>
         </Logger>
 
         <!-- Routing-based appenders -->
 
-        <Logger name="dhtlisteners" level="trace" additivity="false">
+        <Logger name="dhtlisteners" level="info" additivity="false">
             <AppenderRef ref="Console" />
             <AppenderRef ref="DhtListenersRoutingAppender"/>
         </Logger>
