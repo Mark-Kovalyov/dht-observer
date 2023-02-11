@@ -29,7 +29,7 @@ public class IpFilterEmule implements IpFilter {
 
     private List<BannedIpRange> ipSecurityEntities = new ArrayList<>();
 
-    private String guardingPath = "/bigdata/db/amule/guarding.p2p";
+    private String guardingPath = "/bigdata/db/emule/guarding.p2p";
 
     @Inject
     public void init() {

@@ -6,8 +6,8 @@ import com.google.inject.name.Names;
 import mayton.network.dhtobserver.db.Chronicler;
 import mayton.network.dhtobserver.db.IpFilter;
 import mayton.network.dhtobserver.db.Reporter;
-import mayton.network.dhtobserver.db.cassandra.CassandraChronicler;
-import mayton.network.dhtobserver.db.cassandra.CassandraReporter;
+//import mayton.network.dhtobserver.db.cassandra.CassandraChronicler;
+//import mayton.network.dhtobserver.db.cassandra.CassandraReporter;
 import mayton.network.dhtobserver.db.ignite.IgniteChronicler;
 import mayton.network.dhtobserver.db.pg.PGChronicler;
 import mayton.network.dhtobserver.geo.GeoDbCsvImpl;
@@ -24,26 +24,14 @@ public class DhtObserverModule extends AbstractModule {
 
     @Override
     protected void configure() {
-        bind(Chronicler.class)
-                .to(CassandraChronicler.class)
-                .in(Scopes.SINGLETON);
 
         bind(Chronicler.class)
                 .annotatedWith(Names.named("pg"))
                 .to(PGChronicler.class)
                 .in(Scopes.SINGLETON);
 
-        bind(Chronicler.class)
-                .annotatedWith(Names.named("ignite"))
-                .to(IgniteChronicler.class)
-                .in(Scopes.SINGLETON);
-
         bind(GeoDb.class)
                 .to(GeoDbCsvImpl.class)
-                .in(Scopes.SINGLETON);
-
-        bind(Reporter.class)
-                .to(CassandraReporter.class)
                 .in(Scopes.SINGLETON);
 
         bind(ExecutorServiceProvider.class)

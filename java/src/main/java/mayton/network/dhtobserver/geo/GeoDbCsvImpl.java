@@ -23,7 +23,7 @@ public class GeoDbCsvImpl implements GeoDb {
 
     private List<GeoRecord> geoRecords;
 
-    private String csvPath = "/bigdata/GeoIPCity.utf-8.csv";
+    private String csvPath = "/bigdata/db/geo/GeoIPCity.utf-8.csv";
 
     @Inject
     public void init() {

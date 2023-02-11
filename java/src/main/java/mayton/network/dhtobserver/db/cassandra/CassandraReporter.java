@@ -13,6 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
+@Deprecated
 public class CassandraReporter implements Reporter {
 
     static Logger logger = LogManager.getLogger(DhtObserverApplication.class);

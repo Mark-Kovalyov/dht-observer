@@ -1,0 +1,22 @@
+{
+  "namespace":"mayton.network.dhtobserver",
+  "type" : "record",
+  "name" : "DhtMessage",
+  "doc"  : "DHT protocol message",
+  "fields" : [
+
+    { "name" : "SRC_IP",    "type" : "int" },
+    { "name" : "SRC_PORT",  "type" : "int" },
+
+    { "name" : "COUNTRY",   "type" : ["null", "string"] },
+    { "name" : "CITY",      "type" : ["null", "string"] },
+    { "name" : "REGION",    "type" : ["null", "string"] },
+    { "name" : "BEGIN_IP",  "type" : ["null", "string"] },
+    { "name" : "END_IP",    "type" : ["null", "string"] },
+
+    { "name" : "SRC_NODE", "type" : ["null", "string"] },
+
+
+  ]
+}
+

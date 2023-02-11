@@ -3,6 +3,7 @@ package mayton.network.dhtobserver;
 import mayton.dht.DhtMapConverter;
 import mayton.dht.MapJsonConverter;
 import mayton.network.NetworkUtils;
+import mayton.network.dhtobserver.chain.Handler;
 import mayton.network.dhtobserver.db.Chronicler;
 import mayton.network.dhtobserver.db.IpFilter;
 import mayton.network.dhtobserver.db.Reporter;
@@ -10,11 +11,16 @@ import mayton.network.dhtobserver.dht.AnnouncePeer;
 import mayton.network.dhtobserver.dht.FindNode;
 import mayton.network.dhtobserver.dht.GetPeers;
 import mayton.network.dhtobserver.dht.Ping;
+import mayton.network.dhtobserver.dht.handlers.AnnouncePeerHandler;
+import mayton.network.dhtobserver.dht.handlers.FindNodeHandler;
+import mayton.network.dhtobserver.dht.handlers.GetPeerHandler;
+import mayton.network.dhtobserver.dht.handlers.PingHandler;
 import mayton.network.dhtobserver.geo.GeoRecord;
 import mayton.network.dhtobserver.jfr.DhtDecodePacketEvent;
 import mayton.network.dhtobserver.security.BannedIpRange;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.lang3.Validate;
+import org.apache.ignite.internal.processors.cache.persistence.tree.BPlusTree;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.ThreadContext;
@@ -60,6 +66,8 @@ public class UDPConsumer implements Runnable {
 
     private String nodeId;
 
+    private Handler root;
+
     public UDPConsumer(BlockingQueue<UDPConsumerEntity> udpPackets, String threadName, String shortCode) {
         this.udpPackets = udpPackets;
         this.threadName = threadName;
@@ -68,6 +76,10 @@ public class UDPConsumer implements Runnable {
         new File(destPath + "/non-decoded").mkdirs();
         ThreadContext.put("shortCode", shortCode);
         logger = LogManager.getLogger("dhtlisteners." + shortCode);
+        root = new PingHandler("");
+        root.add(new FindNodeHandler(""));
+        //root.add(new GetPeerHandler(""));
+        //root.add(new AnnouncePeerHandler(""));
     }
 
     @Override
@@ -107,8 +119,20 @@ public class UDPConsumer implements Runnable {
         }
     }
 
-    @SuppressWarnings("java:S2629")
     void decodeCommand(DatagramPacket packet) {
+        try {
+            Optional<GeoRecord> geoRecordOptional = geoDb.findFirst(NetworkUtils.fromIpv4toLong(packet.getAddress()));
+            /*if (geoRecordOptional.isEmpty()) {
+                logger.warn("Hmm... unable to recognize GeoIp binding for ip = {}, long = {}", packet.getAddress(), NetworkUtils.fromIpv4toLong(packet.getAddress()));
+            }*/
+            root.process(packet, geoRecordOptional);
+        } catch (IOException e) {
+            logger.error("!", e);
+        }
+    }
+
+    @SuppressWarnings("java:S2629")
+    void decodeCommand2(DatagramPacket packet) {
         MapJsonConverter converter = new MapJsonConverter();
         DhtDecodePacketEvent dhtDecodePacketEvent = new DhtDecodePacketEvent();
         dhtDecodePacketEvent.begin();
@@ -129,36 +153,12 @@ public class UDPConsumer implements Runnable {
             );
 
             Optional<GeoRecord> geoRecordOptional = geoDb.findFirst(NetworkUtils.fromIpv4toLong(packet.getAddress()));
-            if (geoRecordOptional.isEmpty()) {
+            /*if (geoRecordOptional.isEmpty()) {
                 logger.warn("Hmm... unable to recognize GeoIp binding for ip = {}, long = {}", packet.getAddress(), NetworkUtils.fromIpv4toLong(packet.getAddress()));
-            }
+            }*/
             if (optionalRes.isPresent()) {
                 Map<String, Object> res = optionalRes.get();
-                Optional<Ping> pingCommandOptional = tryToExtractPingCommand(res, packet, geoRecordOptional);
-                if (pingCommandOptional.isPresent()) {
-                    dhtDecodePacketEvent.command = "ping";
-                    MDC.put(DHT_EVENT_TYPE, Ping.class.getName());
-                    // ping Query = {"t":"aa", "y":"q", "q":"ping", "a":{"id":"abcdefghij0123456789"}}
-                    // bencoded = d1:ad2:id20:abcdefghij0123456789e1:q4:ping1:t2:aa1:y1:qe
-                    //
-                    // Response = {"t":"aa", "y":"r", "r": {"id":"mnopqrstuvwxyz123456"}}
-                    // bencoded = d1:rd2:id20:mnopqrstuvwxyz123456e1:t2:aa1:y1:re
-                    logger.info("Ping detected");
-                    /*try (DatagramSocket socket = new DatagramSocket()) {
 
-                        Map<String, Object> sendMap = new TreeMap<>();
-                        sendMap.put("r", Collections.singletonMap("id", nodeId));
-                        sendMap.put("t", "aa".getBytes(StandardCharsets.UTF_8));
-                        sendMap.put("y", "r".getBytes(StandardCharsets.UTF_8));
-
-                        // TODO: Refactor code duplications
-                        ByteBuffer sendBuffer = encoder.encode(sendMap, 320);
-                        byte[] sendBytes = sendBuffer.array();
-                        socket.send(new DatagramPacket(sendBytes, sendBytes.length, packet.getAddress(), packet.getPort()));
-                        logger.debug("Pong : {}", converter.convertPretty(sendMap).get());
-                    }*/
-                    chronicler.onPing(pingCommandOptional.get());
-                } else {
                     Optional<FindNode> findNodeOptional = tryToExtractFindNode(res, packet, geoRecordOptional);
                     if (findNodeOptional.isPresent()) {
                         dhtDecodePacketEvent.command = "find";
@@ -214,7 +214,7 @@ public class UDPConsumer implements Runnable {
                         }
                     }
 
-                }
+
                 logger.info("OK! with data: {}", binhex(packetData, true));
                 String json = converter.convertPretty(res).get();
                 logger.info("with structure : {}", json);
@@ -247,26 +247,7 @@ public class UDPConsumer implements Runnable {
     //  "v" : "4c540101",
     //  "y" : "71 ( 'q' )"
     // }
-    private Optional<Ping> tryToExtractPingCommand(Map<String, Object> res, DatagramPacket packet, Optional<GeoRecord> optionalGeoRecord) {
-        if (res.containsKey("q") && (new String((byte[]) res.get("q")).equals("ping"))) {
-            if (res.containsKey("a")) {
-                Map<String, Object> a = (Map<String, Object>) res.get("a");
-                if (a.containsKey("id")) {
-                    return Optional.of(new Ping(
-                            Hex.encodeHexString((byte[]) a.get("id")),
-                            packet.getAddress(),
-                            packet.getPort(),
-                            optionalGeoRecord));
-                } else {
-                    return Optional.empty();
-                }
-            } else {
-                return Optional.empty();
-            }
-        } else {
-            return Optional.empty();
-        }
-    }
+
 
     // {
     //  "a" : {

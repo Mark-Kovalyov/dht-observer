@@ -14,12 +14,11 @@ application :
     - { port : 48529, shortCode : "TR3" }
 
 geoDb:
-  csvPath : "/bigdata/geo/maxmind/2010-10.MaxMind GeoIP City CSV Format/GeoIP-139_20101001/GeoIPCity.utf-8.csv"
+  csvPath : "/dev/null"
 
 ipFilterEmule:
-  guardingPath : "/bigdata/db/amule/guarding.p2p"
+  guardingPath : "/bigdata/db/emule/guarding.p2p"
 
-igniteChronicler :
-  hostPort : "127.0.0.1:8080"
+
 
 
