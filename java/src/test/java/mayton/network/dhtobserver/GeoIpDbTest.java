@@ -1,6 +1,7 @@
 package mayton.network.dhtobserver;
 
 import mayton.network.NetworkUtils;
+import mayton.network.dhtobserver.geo.GeoDb;
 import mayton.network.dhtobserver.geo.GeoDbCsvImpl;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Tag;

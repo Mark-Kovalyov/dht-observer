@@ -8,6 +8,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Range;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -34,17 +35,21 @@ public class IpFilterEmule implements IpFilter {
     @Inject
     public void init() {
         logger.info("init() with instance id = {}", System.identityHashCode(this));
-        try (Stream<String> stream = Files.lines(Paths.get(guardingPath))) {
-            stream.forEach(item -> {
-                BannedIpRange bannedIpRange = new BannedIpRange(
-                        NetworkUtils.parseIpV4(item.substring(0,15)),
-                        NetworkUtils.parseIpV4(item.substring(18,18 + 15)),
-                        item.substring(43));
-                ipSecurityEntities.add(bannedIpRange);
-            });
-            logger.info("init done with {} enitities", ipSecurityEntities.size());
-        } catch (IOException e) {
-            logger.error("!", e);
+        if (new File(guardingPath).exists()) {
+            try (Stream<String> stream = Files.lines(Paths.get(guardingPath))) {
+                stream.forEach(item -> {
+                    BannedIpRange bannedIpRange = new BannedIpRange(
+                            NetworkUtils.parseIpV4(item.substring(0, 15)),
+                            NetworkUtils.parseIpV4(item.substring(18, 18 + 15)),
+                            item.substring(43));
+                    ipSecurityEntities.add(bannedIpRange);
+                });
+                logger.info("init done with {} enitities", ipSecurityEntities.size());
+            } catch (IOException e) {
+                logger.error("!", e);
+            }
+        } else {
+            logger.error("File {} does not exist", guardingPath);
         }
     }
 
@@ -53,6 +58,7 @@ public class IpFilterEmule implements IpFilter {
         int cnt = 0;
         SecurityCheckEvent securityCheckEvent = new SecurityCheckEvent();
         securityCheckEvent.ip = NetworkUtils.formatIpV4(ipv4);
+        // TODO: Improove performance!
         for(BannedIpRange bannedIpRange : ipSecurityEntities) {
             if (ipv4 >= bannedIpRange.beginIp && ipv4 <= bannedIpRange.endIp) {
                 securityCheckEvent.banned = true;

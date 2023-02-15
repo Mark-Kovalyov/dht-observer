@@ -2,20 +2,30 @@
 <Configuration>
     <Appenders>
 
-        <JsonAppender name="JSONAppender" target="SYSTEM_OUT">
-            <JsonLayout complete="false" compact="false">
-                <KeyValuePair key="myCustomField" value="myCustomValue" />
-            </JsonLayout>
-        </JsonAppender>
+        <RollingFile
+                name="JsonRollingFileAppender"
+                fileName="json/events.json"
+                filePattern="json/events.%d{yyyy-MM-dd-HH}.json.gz"
+                ignoreExceptions="true">
+
+            <PatternLayout>
+                <Pattern>%m%n</Pattern>
+            </PatternLayout>
+
+            <Policies>
+                <TimeBasedTriggeringPolicy interval="1"/>
+            </Policies>
+        </RollingFile>
 
         <Console name="Console" target="SYSTEM_OUT">
-            <PatternLayout pattern="%highlight{[%-5p] %-3tid : %X{dhteventtype} : %c %m%n}{FATAL=Bright red blink, ERROR=Bright red, WARN=Bright yellow, INFO=Bright green, DEBUG=Bright cyan, TRACE=Bright cyan}"/>
+            <!--PatternLayout pattern="%highlight{[%-5p] %-3tid : %X{dhteventtype} : %c %m%n}{FATAL=Bright red blink, ERROR=Bright red, WARN=Bright yellow, INFO=Bright green, DEBUG=Bright cyan, TRACE=Bright cyan}"/-->
+            <PatternLayout pattern="[%-5p] %-3tid : %X{dhteventtype} : %c %m%n"/>
         </Console>
 
         <RollingFile
                 name="RollingFileAppender"
-                fileName="/bigdata/dht-observer/logs/application.log"
-                filePattern="/bigdata/dht-observer/logs/application.%d{yyyy-MM-dd-HH}.log.gz"
+                fileName="logs/application.log"
+                filePattern="logs/application.%d{yyyy-MM-dd-HH}.log.gz"
                 ignoreExceptions="true">
             <PatternLayout>
                 <Pattern>%d{ISO8601} [%-5p] %-3tid : %c{1} %m%n</Pattern>
@@ -23,15 +33,7 @@
             <Policies>
                 <TimeBasedTriggeringPolicy interval="1"/>
             </Policies>
-            <!--DefaultRolloverStrategy max="5" /-->
         </RollingFile>
-
-        <!--File name="PgSecuredAppender" fileName="./logs/postgres.log" append="false">
-            <MarkerFilter marker="SECURED" onMatch="DENY" onMismatch="NEUTRAL"/>
-            <PatternLayout>
-                <Pattern>%d{yyyy-MM-dd HH:mm:ss} [%-5p] %-3tid : %c{1} %m%n</Pattern>
-            </PatternLayout>
-        </File-->
 
         <File name="DhtListenersFileAppender" fileName="/bigdata/dht-observer/logs/dht-listeners.log" append="false">
             <PatternLayout>
@@ -79,6 +81,11 @@
         <Logger name="dhtlisteners" level="info" additivity="false">
             <AppenderRef ref="Console" />
             <AppenderRef ref="DhtListenersRoutingAppender"/>
+        </Logger>
+
+        <!-- Bigdata events -->
+        <Logger name="bigdata" level="info" additivity="false">
+            <AppenderRef ref="JsonRollingFileAppender"/>
         </Logger>
 
     </Loggers>

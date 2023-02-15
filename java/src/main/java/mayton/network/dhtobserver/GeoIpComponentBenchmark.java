@@ -1,5 +1,6 @@
 package mayton.network.dhtobserver;
 
+import mayton.network.dhtobserver.geo.GeoDb;
 import mayton.network.dhtobserver.geo.GeoDbCsvImpl;
 import org.openjdk.jmh.annotations.*;
 

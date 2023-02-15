@@ -1,3 +1,0 @@
-#!/bin/bash -ev
-
-java -jar bin/dht-get-peers.jar  95.139.214.82

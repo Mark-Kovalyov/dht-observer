@@ -2,12 +2,12 @@ package mayton.network.dhtobserver.geo;
 
 import com.google.inject.Inject;
 import mayton.network.NetworkUtils;
-import mayton.network.dhtobserver.GeoDb;
 import mayton.network.dhtobserver.jfr.GeoEnrichmentEvent;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 
+import org.apache.commons.lang3.Validate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.profiler.Profiler;
@@ -85,6 +85,7 @@ public class GeoDbCsvImpl implements GeoDb {
     }
 
     public Optional<GeoRecord> findFirst(long ipv4) {
+        Validate.inclusiveBetween(ipv4, 0, 0xFFFF_FFFFL);
         GeoEnrichmentEvent geoEnrichmentEvent = new GeoEnrichmentEvent();
         geoEnrichmentEvent.begin();
         Optional<GeoRecord> result = findFirstStuped(ipv4, geoRecords);
