@@ -7,8 +7,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class TsharkAnalyzeTest {
 
-
-
     @Test
     public void test2() {
         int SHA1_BITS = 160;

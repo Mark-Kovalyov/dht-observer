@@ -1,7 +1,7 @@
 package mayton.network.dhtobserver.dht.handlers;
 
-import mayton.dht.DhtDetector;
-import mayton.dht.events.Ping;
+import mayton.network.dht.DhtDetector;
+import mayton.network.dht.events.Ping;
 import mayton.network.dhtobserver.LoggerHelper;
 import mayton.network.dhtobserver.chain.BasicHandler;
 import mayton.network.dhtobserver.geo.GeoRecord;
@@ -12,8 +12,6 @@ import org.slf4j.MDC;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.util.*;
-
-
 
 public class PingHandler extends BasicHandler {
 

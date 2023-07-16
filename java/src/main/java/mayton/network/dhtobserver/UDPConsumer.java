@@ -1,8 +1,8 @@
 package mayton.network.dhtobserver;
 
-import mayton.dht.DhtMapConverter;
-import mayton.dht.MapJsonConverter;
 import mayton.network.NetworkUtils;
+import mayton.network.dht.DhtMapConverter;
+import mayton.network.dht.MapJsonConverter;
 import mayton.network.dhtobserver.chain.Handler;
 import mayton.network.dhtobserver.db.Chronicler;
 import mayton.network.dhtobserver.db.IpFilter;
@@ -10,7 +10,9 @@ import mayton.network.dhtobserver.db.Reporter;
 import mayton.network.dhtobserver.dht.AnnouncePeer;
 import mayton.network.dhtobserver.dht.FindNode;
 import mayton.network.dhtobserver.dht.GetPeers;
+import mayton.network.dhtobserver.dht.handlers.AnnouncePeerHandler;
 import mayton.network.dhtobserver.dht.handlers.FindNodeHandler;
+import mayton.network.dhtobserver.dht.handlers.GetPeerHandler;
 import mayton.network.dhtobserver.dht.handlers.PingHandler;
 import mayton.network.dhtobserver.geo.GeoDb;
 import mayton.network.dhtobserver.geo.GeoRecord;
@@ -73,10 +75,11 @@ public class UDPConsumer implements Runnable {
         new File(destPath + "/non-decoded").mkdirs();
         ThreadContext.put("shortCode", shortCode);
         logger = LogManager.getLogger("dhtlisteners." + shortCode);
-        root = new PingHandler("");
-        root.add(new FindNodeHandler(""));
-        //root.add(new GetPeerHandler(""));
-        //root.add(new AnnouncePeerHandler(""));
+        // Create chain of responsbility for handling of UDP
+        root = new PingHandler("ping-handler");
+        root.add(new FindNodeHandler("find-node-handler"));
+        root.add(new GetPeerHandler("get-peer-handler"));
+        root.add(new AnnouncePeerHandler("anounce-peer-handler"));
     }
 
     @Override
